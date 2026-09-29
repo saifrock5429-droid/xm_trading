@@ -1,24 +1,28 @@
 
 import React from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import Navbar from './components/Navbar';
 import HeroBanner from './components/HeroBanner';
 import Promos from './components/Promos';
 import TradingTerminal from './components/TradingTerminal';
+import DepositPage from './components/DepositPage';
 import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
+import Tournaments from './components/Tournaments';
+import AccountPage from './components/AccountPage';
 import Footer from './components/Footer';
 
 export default function App() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Helper function to sync with Navbar props
   const getActiveTab = () => {
     const path = location.pathname;
     if (path === '/') return 'home';
     if (path === '/promotions') return 'promotions';
-    if (path === '/terminal') return 'terminal';
+    if (path === '/terminal' || path.startsWith('/terminal/')) return 'terminal';
+    if (path.startsWith('/tournment')) return 'tournment';
+    if (path === '/account') return 'account';
     if (path === '/login') return 'login';
     if (path === '/register') return 'register';
     return 'home';
@@ -29,35 +33,44 @@ export default function App() {
       case 'home': navigate('/'); break;
       case 'promotions': navigate('/promotions'); break;
       case 'terminal': navigate('/terminal'); break;
+      case 'tournment': navigate('/tournment/active'); break;
+      case 'account': navigate('/account'); break;
       case 'login': navigate('/login'); break;
       case 'register': navigate('/register'); break;
       default: navigate('/'); break;
     }
   };
 
-  const showFooter = location.pathname !== '/login' && location.pathname !== '/register';
+  // Full-screen layout check
+  const isFullScreenApp = 
+    location.pathname.startsWith('/terminal') || 
+    location.pathname.startsWith('/tournment') || 
+    location.pathname === '/deposit' ||
+    location.pathname === '/account';
+
+  const showNavbarAndFooter = location.pathname !== '/login' && location.pathname !== '/register' && !isFullScreenApp;
 
   return (
-    <div className="min-h-screen flex flex-col bg-white text-gray-900 font-sans antialiased">
-      
-      {/* Top Navbar */}
-      <Navbar activeTab={getActiveTab()} setActiveTab={setActiveTab} />
+    <div className="min-h-screen flex flex-col bg-[#0d121d] text-gray-100 font-sans antialiased">
 
-      {/* Main Views via Routes */}
+      {/* Top Navbar */}
+      {showNavbarAndFooter && <Navbar activeTab={getActiveTab()} setActiveTab={setActiveTab} />}
+
+      {/* Routes */}
       <Routes>
         <Route 
           path="/" 
           element={
-            <main className="flex-1">
+            <main className="flex-1 bg-white text-gray-900">
               <HeroBanner onStartTrading={() => navigate('/register')} />
             </main>
           } 
         />
-        
+
         <Route 
           path="/promotions" 
           element={
-            <main className="flex-1 py-8">
+            <main className="flex-1 py-8 bg-white text-gray-900">
               <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-6">
                 <h1 className="text-3xl font-extrabold text-gray-900">All XM Promotions</h1>
                 <p className="text-gray-600 mt-2">Explore our exclusive rewards, deposit bonuses, and trading competitions.</p>
@@ -67,48 +80,34 @@ export default function App() {
           } 
         />
 
+        {/* TRADING TERMINAL */}
         <Route 
           path="/terminal" 
           element={
-            <main className="flex-1 bg-slate-900">
-              <div className="bg-slate-800 text-slate-300 px-6 py-3 border-b border-slate-700 flex justify-between items-center text-xs">
-                <span className="font-semibold text-emerald-400 flex items-center space-x-2">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
-                  <span>LIVE DEMO TRADING TERMINAL ACTIVE</span>
-                </span>
-                <button
-                  onClick={() => navigate('/')}
-                  className="hover:text-white underline font-medium"
-                >
-                  ← Back to Main Website
-                </button>
-              </div>
+            <main className="flex-1 w-full h-screen overflow-hidden">
               <TradingTerminal />
             </main>
           } 
         />
 
-        <Route 
-          path="/login" 
-          element={
-            <main className="flex-1">
-              <LoginPage onNavigate={(page) => setActiveTab(page)} />
-            </main>
-          } 
-        />
+        {/* ACCOUNT ROUTE */}
+        <Route path="/account" element={<AccountPage />} />
 
-        <Route 
-          path="/register" 
-          element={
-            <main className="flex-1">
-              <RegisterPage onNavigate={(page) => setActiveTab(page)} />
-            </main>
-          } 
-        />
+        {/* TOURNAMENT ROUTES */}
+        <Route path="/tournment" element={<Navigate to="/tournment/active" replace />} />
+        <Route path="/tournment/:tab" element={<Tournaments />} />
+
+        {/* DEPOSIT ROUTES */}
+        <Route path="/terminal/deposit" element={<DepositPage />} />
+        <Route path="/deposit" element={<DepositPage />} />
+
+        {/* AUTH ROUTES */}
+        <Route path="/login" element={<main className="flex-1"><LoginPage onNavigate={(page) => setActiveTab(page)} /></main>} />
+        <Route path="/register" element={<main className="flex-1"><RegisterPage onNavigate={(page) => setActiveTab(page)} /></main>} />
       </Routes>
 
       {/* Footer */}
-      {showFooter && <Footer />}
+      {showNavbarAndFooter && <Footer />}
     </div>
   );
 }
