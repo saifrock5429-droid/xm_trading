@@ -503,7 +503,7 @@ import {
   BarChart2, HelpCircle, User, Trophy, Store, MoreHorizontal, 
   Plus, Bell, ChevronDown, Minus, ArrowUp, ArrowDown, 
   Settings, Volume2, Maximize2, ShieldCheck,
-  Briefcase, Send, X, ArrowUpRight, History, Clock, CheckCircle2, XCircle
+  Send, X, ArrowUpRight, History, Clock, CheckCircle2, XCircle
 } from 'lucide-react';
 
 // Available Assets List
