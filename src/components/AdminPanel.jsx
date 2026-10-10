@@ -44,7 +44,7 @@
 //   // 1. Fetch User Data (Live Balance)
 //   const fetchUserData = async () => {
 //     try {
-//       const res = await fetch('http://localhost:5000/api/payments/live-balance');
+//       const res = await fetch('http://:5000/api/payments/live-balance');
 //       const data = await res.json();
 //       if (data.success && data.user) {
 //         setUserData(data.user);
@@ -497,7 +497,7 @@ export default function AdminPanel() {
   // 1. Fetch User Data
   const fetchUserData = useCallback(async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/payments/live-balance');
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/payments/live-balance`);
       const data = await res.json();
       if (data.success && data.user) {
         setUserData(data.user);
@@ -514,7 +514,7 @@ export default function AdminPanel() {
   const fetchPayments = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/payments/all');
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/payments/all`);
       const data = await res.json();
       if (data.success) {
         setPayments(data.payments);
@@ -534,7 +534,7 @@ export default function AdminPanel() {
   // 3. Fetch Withdrawals
   const fetchWithdrawals = useCallback(async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/payments/withdrawal/all');
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/payments/withdrawal/all`);
       const data = await res.json();
       if (data.success) {
         setWithdrawals(data.withdrawals);
@@ -572,7 +572,7 @@ export default function AdminPanel() {
     setSubmittingId(id);
 
     try {
-      const res = await fetch(`http://localhost:5000/api/payments/amount/${id}`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/payments/amount/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
@@ -612,7 +612,7 @@ export default function AdminPanel() {
     if (!window.confirm('Kya aapne user ke bank account me paise transfer kar diye hain?')) return;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/payments/withdrawal/status/${id}`, {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/payments/withdrawal/status/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ status: 'Transferred' })
@@ -642,7 +642,7 @@ export default function AdminPanel() {
         ? Number((Number(directBalanceInput) / EXCHANGE_RATE).toFixed(2)) 
         : Number(Number(directBalanceInput).toFixed(2));
 
-      const res = await fetch('http://localhost:5000/api/payments/set-user-balance', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/payments/set-user-balance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ balanceUSD: targetUSD, email: userData?.email })

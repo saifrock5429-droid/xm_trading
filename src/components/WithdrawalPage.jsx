@@ -26,7 +26,7 @@ export default function WithdrawalPage() {
   useEffect(() => {
     const fetchBalance = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/payments/live-balance');
+        const res = await fetch(`${process.env.REACT_APP_API_URL}/api/payments/live-balance`);
         const data = await res.json();
         if (data.success && data.user) {
           setBalance(Number(data.user.balance || 0));
@@ -62,7 +62,7 @@ export default function WithdrawalPage() {
 
     setSubmitting(true);
     try {
-      const res = await fetch('http://localhost:5000/api/payments/withdrawal/create', {
+      const res = await fetch('http://:5000/api/payments/withdrawal/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

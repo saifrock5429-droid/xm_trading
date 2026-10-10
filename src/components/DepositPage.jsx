@@ -50,7 +50,7 @@ export default function DepositPage() {
       const userId = localStorage.getItem('userId');
       if (userId) formData.append('userId', userId);
 
-      const res = await fetch('http://localhost:5000/api/payments/upload', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/payments/upload`, {
         method: 'POST',
         body: formData,
       });

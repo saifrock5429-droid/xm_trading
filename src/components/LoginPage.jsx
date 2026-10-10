@@ -158,7 +158,7 @@ export default function LoginPage({ onNavigate }) {
 
     setLoading(true);
     try {
-      const res = await fetch('http://localhost:5000/api/users/login', {
+      const res = await fetch('http://:5000/api/users/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -198,7 +198,7 @@ export default function LoginPage({ onNavigate }) {
 
     setResetting(true);
     try {
-      const res = await fetch('http://localhost:5000/api/users/forgot-password', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/users/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: forgotEmail, newPassword })

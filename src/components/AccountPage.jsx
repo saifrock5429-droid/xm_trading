@@ -33,7 +33,7 @@
 //   useEffect(() => {
 //     const fetchUserData = async () => {
 //       try {
-//         const response = await fetch(`http://localhost:5000/api/users/profile/${userId}`);
+//         const response = await fetch(`http://:5000/api/users/profile/${userId}`);
         
 //         if (!response.ok) {
 //           throw new Error(`Server status: ${response.status}`);
@@ -75,7 +75,7 @@
 //     setSaving(true);
 
 //     try {
-//       const response = await fetch(`http://localhost:5000/api/users/profile/${userId}`, {
+//       const response = await fetch(`http://:5000/api/users/profile/${userId}`, {
 //         method: 'PUT',
 //         headers: {
 //           'Content-Type': 'application/json'
@@ -105,7 +105,7 @@
 //   // Handle Delete Account
 //   const handleDeleteAccount = async () => {
 //     try {
-//       const response = await fetch(`http://localhost:5000/api/users/profile/${userId}`, {
+//       const response = await fetch(`http://:5000/api/users/profile/${userId}`, {
 //         method: 'DELETE'
 //       });
 
@@ -401,7 +401,7 @@ export default function AccountPage() {
   useEffect(() => {
     const fetchUserData = async () => {
       try {
-        const response = await fetch(`http://localhost:5000/api/users/profile/${userId}`);
+        const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/profile/${userId}`);
         const data = await response.json();
 
         if (data.success && data.user) {
@@ -438,7 +438,7 @@ export default function AccountPage() {
     setSaving(true);
 
     try {
-      const response = await fetch(`http://localhost:5000/api/users/profile/${userId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/profile/${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData)
@@ -467,7 +467,7 @@ export default function AccountPage() {
 
     setChangingPass(true);
     try {
-      const res = await fetch('http://localhost:5000/api/users/change-password', {
+      const res = await fetch('http://:5000/api/users/change-password', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, oldPassword, newPassword })
@@ -490,7 +490,7 @@ export default function AccountPage() {
   // Delete Account
   const handleDeleteAccount = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/users/profile/${userId}`, {
+      const response = await fetch(`${process.env.REACT_APP_API_URL}/api/users/profile/${userId}`, {
         method: 'DELETE'
       });
 
