@@ -467,7 +467,7 @@ export default function AccountPage() {
 
     setChangingPass(true);
     try {
-      const res = await fetch('http://:5000/api/users/change-password', {
+      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/users/change-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ userId, oldPassword, newPassword })
