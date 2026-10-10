@@ -458,7 +458,6 @@
 // }
 
 
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { 
   ExternalLink, RefreshCw, IndianRupee, Send, DollarSign, 
@@ -482,7 +481,7 @@ export default function AdminPanel() {
   const [updatingDirectBalance, setUpdatingDirectBalance] = useState(false);
 
   // Broadcast new balance to Trading Terminal across tabs
-  const broadcastNewBalance = (newBal) => {
+  const broadcastNewBalance = useCallback((newBal) => {
     try {
       const numBal = Number(newBal);
       localStorage.setItem('trading_live_balance', numBal.toString());
@@ -490,23 +489,29 @@ export default function AdminPanel() {
       const bc = new BroadcastChannel('trading_balance_sync');
       bc.postMessage({ balanceUSD: numBal });
       bc.close();
-    } catch (e) {}
-  };
+    } catch (e) {
+      console.warn('Broadcast error:', e);
+    }
+  }, []);
 
-  const fetchUserData = async () => {
+  // 1. Fetch User Data
+  const fetchUserData = useCallback(async () => {
     try {
       const res = await fetch('http://localhost:5000/api/payments/live-balance');
       const data = await res.json();
       if (data.success && data.user) {
         setUserData(data.user);
-        if (data.user.balance !== undefined) broadcastNewBalance(Number(data.user.balance));
+        if (data.user.balance !== undefined) {
+          broadcastNewBalance(Number(data.user.balance));
+        }
       }
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching user data:', err);
     }
-  };
+  }, [broadcastNewBalance]);
 
-  const fetchPayments = async () => {
+  // 2. Fetch Payments
+  const fetchPayments = useCallback(async () => {
     setLoading(true);
     try {
       const res = await fetch('http://localhost:5000/api/payments/all');
@@ -520,27 +525,31 @@ export default function AdminPanel() {
         setCustomAmounts(initialAmounts);
       }
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching payments:', err);
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
-  const fetchWithdrawals = async () => {
+  // 3. Fetch Withdrawals
+  const fetchWithdrawals = useCallback(async () => {
     try {
       const res = await fetch('http://localhost:5000/api/payments/withdrawal/all');
       const data = await res.json();
-      if (data.success) setWithdrawals(data.withdrawals);
+      if (data.success) {
+        setWithdrawals(data.withdrawals);
+      }
     } catch (err) {
-      console.error(err);
+      console.error('Error fetching withdrawals:', err);
     }
-  };
+  }, []);
 
+  // Refresh All Data with correct useCallback dependencies
   const refreshAll = useCallback(() => {
     fetchPayments();
     fetchWithdrawals();
     fetchUserData();
-  }, []);
+  }, [fetchPayments, fetchWithdrawals, fetchUserData]);
 
   useEffect(() => {
     refreshAll();
@@ -566,16 +575,25 @@ export default function AdminPanel() {
       const res = await fetch(`http://localhost:5000/api/payments/amount/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ amountINR: inrValue, amountUSD: usdConverted, exchangeRate: EXCHANGE_RATE }),
+        body: JSON.stringify({ 
+          amountINR: inrValue, 
+          amountUSD: usdConverted, 
+          exchangeRate: EXCHANGE_RATE 
+        }),
       });
 
       const data = await res.json();
       if (data.success) {
-        setPayments((prev) => prev.map((p) => p._id === id ? { ...p, ...data.payment, status: 'Approved' } : p));
+        setPayments((prev) =>
+          prev.map((p) => (p._id === id ? { ...p, ...data.payment, status: 'Approved' } : p))
+        );
         const finalBalance = data.liveBalance !== undefined ? Number(data.liveBalance) : usdConverted;
 
-        if (data.user) setUserData(data.user);
-        else setUserData((prev) => ({ ...(prev || {}), balance: finalBalance }));
+        if (data.user) {
+          setUserData(data.user);
+        } else {
+          setUserData((prev) => ({ ...(prev || {}), balance: finalBalance }));
+        }
 
         broadcastNewBalance(finalBalance);
         alert(`✅ SUCCESS!\n₹${inrValue} INR ($${usdConverted} USD) Trading Terminal ke LIVE balance me credit ho gaya!\n\nNaya Live Balance: $${finalBalance} USD`);
@@ -591,7 +609,7 @@ export default function AdminPanel() {
 
   // Admin Transfer Withdrawal Button
   const handleTransferWithdrawal = async (id) => {
-    if (!window.confirm('Kya aapne user ke account me paise transfer kar diye hain?')) return;
+    if (!window.confirm('Kya aapne user ke bank account me paise transfer kar diye hain?')) return;
 
     try {
       const res = await fetch(`http://localhost:5000/api/payments/withdrawal/status/${id}`, {
@@ -601,7 +619,9 @@ export default function AdminPanel() {
       });
       const data = await res.json();
       if (data.success) {
-        setWithdrawals(prev => prev.map(w => w._id === id ? { ...w, status: 'Transferred' } : w));
+        setWithdrawals((prev) =>
+          prev.map((w) => (w._id === id ? { ...w, status: 'Transferred' } : w))
+        );
         alert('✅ Withdrawal marked as Transferred successfully!');
       }
     } catch (err) {
@@ -830,7 +850,7 @@ export default function AdminPanel() {
 
                       {/* Enter Amount Field + OK */}
                       <div className="space-y-2 pt-1">
-                        <label className="text-[11px] text-gray-300 font-semibold flex items-between justify-between">
+                        <label className="text-[11px] text-gray-300 font-semibold flex items-center justify-between">
                           <span>Enter INR Amount (Rupees):</span>
                           <span className="text-gray-400">₹ INR</span>
                         </label>
