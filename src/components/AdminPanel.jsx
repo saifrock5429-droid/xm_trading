@@ -457,10 +457,12 @@
 //   );
 // }
 
-import React, { useEffect, useState } from 'react';
+
+
+import React, { useEffect, useState, useCallback } from 'react';
 import { 
   ExternalLink, RefreshCw, IndianRupee, Send, DollarSign, 
-  User, Wallet, CheckCircle2, Clock, Sparkles, Landmark, ArrowUpRight 
+  User, Wallet, CheckCircle2, Clock, Sparkles, ArrowUpRight 
 } from 'lucide-react';
 
 const EXCHANGE_RATE = 96;
@@ -534,15 +536,15 @@ export default function AdminPanel() {
     }
   };
 
-  const refreshAll = () => {
+  const refreshAll = useCallback(() => {
     fetchPayments();
     fetchWithdrawals();
     fetchUserData();
-  };
+  }, []);
 
   useEffect(() => {
     refreshAll();
-  }, []);
+  }, [refreshAll]);
 
   const handleAmountChange = (id, value) => {
     setCustomAmounts((prev) => ({ ...prev, [id]: value }));
