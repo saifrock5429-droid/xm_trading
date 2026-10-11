@@ -1,5 +1,4 @@
 
-
 // import React from 'react';
 // import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 // import Navbar from './components/Navbar';
@@ -7,6 +6,7 @@
 // import Promos from './components/Promos';
 // import TradingTerminal from './components/TradingTerminal';
 // import DepositPage from './components/DepositPage';
+// import WithdrawalPage from './components/WithdrawalPage';
 // import LoginPage from './components/LoginPage';
 // import RegisterPage from './components/RegisterPage';
 // import Tournaments from './components/Tournaments';
@@ -15,7 +15,7 @@
 // import SupportPage from './components/SupportPage';
 // import MorePage from './components/MorePage';
 // import Footer from './components/Footer';
-// import AdminPanel from './components/AdminPanel'; // Admin Component Added
+// import AdminPanel from './components/AdminPanel';
 
 // export default function App() {
 //   const navigate = useNavigate();
@@ -52,7 +52,6 @@
 //     }
 //   };
 
-//   // Full-screen layout check (Admin Panel added to prevent header/footer collision)
 //   const isFullScreenApp = 
 //     location.pathname.startsWith('/terminal') || 
 //     location.pathname.startsWith('/tournment') || 
@@ -68,10 +67,8 @@
 //   return (
 //     <div className="min-h-screen flex flex-col bg-[#0d121d] text-gray-100 font-sans antialiased">
 
-//       {/* Top Navbar */}
 //       {showNavbarAndFooter && <Navbar activeTab={getActiveTab()} setActiveTab={setActiveTab} />}
 
-//       {/* Routes */}
 //       <Routes>
 //         <Route 
 //           path="/" 
@@ -125,6 +122,10 @@
 //         <Route path="/terminal/deposit" element={<DepositPage />} />
 //         <Route path="/deposit" element={<DepositPage />} />
 
+//         {/* WITHDRAWAL ROUTES */}
+//         <Route path="/terminal/withdrawal" element={<WithdrawalPage />} />
+//         <Route path="/withdrawal" element={<WithdrawalPage />} />
+
 //         {/* ADMIN ROUTE */}
 //         <Route path="/admin/payments" element={<AdminPanel />} />
 
@@ -133,11 +134,12 @@
 //         <Route path="/register" element={<main className="flex-1"><RegisterPage onNavigate={(page) => setActiveTab(page)} /></main>} />
 //       </Routes>
 
-//       {/* Footer */}
 //       {showNavbarAndFooter && <Footer />}
 //     </div>
 //   );
 // }
+
+
 
 import React from 'react';
 import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
@@ -195,7 +197,8 @@ export default function App() {
   const isFullScreenApp = 
     location.pathname.startsWith('/terminal') || 
     location.pathname.startsWith('/tournment') || 
-    location.pathname === '/deposit' ||
+    location.pathname.startsWith('/deposit') ||
+    location.pathname.startsWith('/withdrawal') ||
     location.pathname === '/account' ||
     location.pathname === '/market' ||
     location.pathname === '/support' ||
@@ -259,12 +262,12 @@ export default function App() {
         <Route path="/tournment/:tab" element={<Tournaments />} />
 
         {/* DEPOSIT ROUTES */}
-        <Route path="/terminal/deposit" element={<DepositPage />} />
         <Route path="/deposit" element={<DepositPage />} />
+        <Route path="/terminal/deposit" element={<DepositPage />} />
 
         {/* WITHDRAWAL ROUTES */}
-        <Route path="/terminal/withdrawal" element={<WithdrawalPage />} />
         <Route path="/withdrawal" element={<WithdrawalPage />} />
+        <Route path="/terminal/withdrawal" element={<WithdrawalPage />} />
 
         {/* ADMIN ROUTE */}
         <Route path="/admin/payments" element={<AdminPanel />} />
