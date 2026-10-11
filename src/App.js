@@ -1,4 +1,3 @@
-
 // import React from 'react';
 // import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 // import Navbar from './components/Navbar';
@@ -11,7 +10,7 @@
 // import RegisterPage from './components/RegisterPage';
 // import Tournaments from './components/Tournaments';
 // import AccountPage from './components/AccountPage';
-// import Market from './components/Market';
+// import Invest from './components/Invest';
 // import SupportPage from './components/SupportPage';
 // import MorePage from './components/MorePage';
 // import Footer from './components/Footer';
@@ -28,7 +27,7 @@
 //     if (path === '/terminal' || path.startsWith('/terminal/')) return 'terminal';
 //     if (path.startsWith('/tournment')) return 'tournment';
 //     if (path === '/account') return 'account';
-//     if (path === '/market') return 'market';
+//     if (path === '/invest' || path === '/market') return 'invest';
 //     if (path === '/support') return 'support';
 //     if (path === '/more') return 'more';
 //     if (path === '/login') return 'login';
@@ -43,7 +42,8 @@
 //       case 'terminal': navigate('/terminal'); break;
 //       case 'tournment': navigate('/tournment/active'); break;
 //       case 'account': navigate('/account'); break;
-//       case 'market': navigate('/market'); break;
+//       case 'invest': navigate('/invest'); break;
+//       case 'market': navigate('/invest'); break;
 //       case 'support': navigate('/support'); break;
 //       case 'more': navigate('/more'); break;
 //       case 'login': navigate('/login'); break;
@@ -55,8 +55,10 @@
 //   const isFullScreenApp = 
 //     location.pathname.startsWith('/terminal') || 
 //     location.pathname.startsWith('/tournment') || 
-//     location.pathname === '/deposit' ||
+//     location.pathname.startsWith('/deposit') ||
+//     location.pathname.startsWith('/withdrawal') ||
 //     location.pathname === '/account' ||
+//     location.pathname === '/invest' ||
 //     location.pathname === '/market' ||
 //     location.pathname === '/support' ||
 //     location.pathname === '/more' ||
@@ -108,8 +110,9 @@
 //         {/* MORE PAGE ROUTE */}
 //         <Route path="/more" element={<MorePage />} />
 
-//         {/* MARKET ROUTE */}
-//         <Route path="/market" element={<Market />} />
+//         {/* INVEST ROUTE (Replacing Market) */}
+//         <Route path="/invest" element={<Invest />} />
+//         <Route path="/market" element={<Invest />} />
 
 //         {/* ACCOUNT ROUTE */}
 //         <Route path="/account" element={<AccountPage />} />
@@ -119,12 +122,12 @@
 //         <Route path="/tournment/:tab" element={<Tournaments />} />
 
 //         {/* DEPOSIT ROUTES */}
-//         <Route path="/terminal/deposit" element={<DepositPage />} />
 //         <Route path="/deposit" element={<DepositPage />} />
+//         <Route path="/terminal/deposit" element={<DepositPage />} />
 
 //         {/* WITHDRAWAL ROUTES */}
-//         <Route path="/terminal/withdrawal" element={<WithdrawalPage />} />
 //         <Route path="/withdrawal" element={<WithdrawalPage />} />
+//         <Route path="/terminal/withdrawal" element={<WithdrawalPage />} />
 
 //         {/* ADMIN ROUTE */}
 //         <Route path="/admin/payments" element={<AdminPanel />} />
@@ -153,7 +156,7 @@ import LoginPage from './components/LoginPage';
 import RegisterPage from './components/RegisterPage';
 import Tournaments from './components/Tournaments';
 import AccountPage from './components/AccountPage';
-import Market from './components/Market';
+import Invest from './components/Invest';
 import SupportPage from './components/SupportPage';
 import MorePage from './components/MorePage';
 import Footer from './components/Footer';
@@ -170,7 +173,7 @@ export default function App() {
     if (path === '/terminal' || path.startsWith('/terminal/')) return 'terminal';
     if (path.startsWith('/tournment')) return 'tournment';
     if (path === '/account') return 'account';
-    if (path === '/market') return 'market';
+    if (path === '/invest' || path === '/market') return 'invest';
     if (path === '/support') return 'support';
     if (path === '/more') return 'more';
     if (path === '/login') return 'login';
@@ -185,7 +188,8 @@ export default function App() {
       case 'terminal': navigate('/terminal'); break;
       case 'tournment': navigate('/tournment/active'); break;
       case 'account': navigate('/account'); break;
-      case 'market': navigate('/market'); break;
+      case 'invest': navigate('/invest'); break;
+      case 'market': navigate('/invest'); break;
       case 'support': navigate('/support'); break;
       case 'more': navigate('/more'); break;
       case 'login': navigate('/login'); break;
@@ -200,6 +204,7 @@ export default function App() {
     location.pathname.startsWith('/deposit') ||
     location.pathname.startsWith('/withdrawal') ||
     location.pathname === '/account' ||
+    location.pathname === '/invest' ||
     location.pathname === '/market' ||
     location.pathname === '/support' ||
     location.pathname === '/more' ||
@@ -251,8 +256,9 @@ export default function App() {
         {/* MORE PAGE ROUTE */}
         <Route path="/more" element={<MorePage />} />
 
-        {/* MARKET ROUTE */}
-        <Route path="/market" element={<Market />} />
+        {/* INVEST ROUTE (Replacing Market) */}
+        <Route path="/invest" element={<Invest />} />
+        <Route path="/market" element={<Invest />} />
 
         {/* ACCOUNT ROUTE */}
         <Route path="/account" element={<AccountPage />} />

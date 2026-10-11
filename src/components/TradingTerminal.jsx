@@ -1,10 +1,9 @@
-
-
 // import React, { useState, useEffect, useRef } from 'react';
 // import { 
 //   ChevronDown, Plus, Minus, ArrowUp, ArrowDown, 
-//   ShieldCheck, X 
+//   ShieldCheck, X, BarChart2, History, HelpCircle, User, Trophy, TrendingUp 
 // } from 'lucide-react';
+// import { useNavigate } from 'react-router-dom';
 
 // import { ASSETS, EXPIRY_TIMES } from './constants';
 // import Toast from './Toast';
@@ -13,6 +12,9 @@
 // import TradesDrawer from './TradesDrawer';
 
 // export default function TradingTerminal() {
+//   const navigate = useNavigate();
+
+//   // 1. Live Balance (Default 0 for new sessions unless logged in with balance)
 //   const [balance, setBalance] = useState(() => {
 //     const saved = localStorage.getItem('trading_live_balance');
 //     return saved && !isNaN(Number(saved)) ? Number(saved) : 0;
@@ -25,7 +27,17 @@
 //   const [activeTab, setActiveTab] = useState('trade');
 
 //   const [activeTrades, setActiveTrades] = useState([]);
-//   const [closedTrades, setClosedTrades] = useState([]);
+
+//   // 2. Closed Trades Persistent State from LocalStorage
+//   const [closedTrades, setClosedTrades] = useState(() => {
+//     try {
+//       const saved = localStorage.getItem('trading_closed_trades');
+//       return saved ? JSON.parse(saved) : [];
+//     } catch (e) {
+//       return [];
+//     }
+//   });
+
 //   const [showTradesDrawer, setShowTradesDrawer] = useState(false);
 //   const [tradesDrawerTab, setTradesDrawerTab] = useState('active');
 
@@ -37,7 +49,7 @@
 //   const processedTradeIdsRef = useRef(new Set());
 //   const canvasRef = useRef(null);
   
-//   // Candles with timestamps for 08:00, 10:00, 12:06 style axis
+//   // Real-looking candles data for canvas rendering
 //   const candlesRef = useRef([
 //     { open: 0.69830, high: 0.69920, low: 0.69800, close: 0.69880, timeLabel: '08:00' },
 //     { open: 0.69880, high: 0.69900, low: 0.69840, close: 0.69850, timeLabel: '09:00' },
@@ -71,6 +83,7 @@
 //     activeTradesRef.current = activeTrades;
 //   }, [activeTrades]);
 
+//   // Sync Live Balance to server with User Identification
 //   const syncBalanceToServer = async (newBal) => {
 //     try {
 //       const numBal = Number(newBal);
@@ -81,19 +94,34 @@
 //         bc.close();
 //       } catch (e) {}
 
-//       await fetch(`${process.env.REACT_APP_API_URL}/api/payments/set-user-balance`, {
+//       const userId = localStorage.getItem('userId') || '';
+//       const email = localStorage.getItem('userEmail') || '';
+//       const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/['"]+/g, '').trim();
+
+//       await fetch(`${API_URL}/api/payments/set-user-balance`, {
 //         method: 'POST',
 //         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ balanceUSD: numBal })
+//         body: JSON.stringify({ balanceUSD: numBal, userId, email })
 //       });
 //     } catch (err) {
 //       console.error('Error syncing balance to server:', err);
 //     }
 //   };
 
+//   // Fetch Live Balance specifically for the Logged-in User (Isolated)
 //   const fetchUserBalance = async () => {
 //     try {
-//       const res = await fetch(`${process.env.REACT_APP_API_URL}/api/payments/live-balance`);
+//       const userId = localStorage.getItem('userId') || '';
+//       const email = localStorage.getItem('userEmail') || '';
+//       const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/['"]+/g, '').trim();
+
+//       const params = new URLSearchParams();
+//       if (userId) params.append('userId', userId);
+//       if (email) params.append('email', email);
+
+//       const res = await fetch(`${API_URL}/api/payments/live-balance?${params.toString()}`, {
+//         headers: { 'x-user-id': userId, 'x-user-email': email }
+//       });
 //       if (!res.ok) return;
 
 //       const data = await res.json();
@@ -138,7 +166,7 @@
 //     };
 //     window.addEventListener('storage', handleStorage);
 
-//     const balanceInterval = setInterval(fetchUserBalance, 1000);
+//     const balanceInterval = setInterval(fetchUserBalance, 3000);
 //     return () => {
 //       if (channel) channel.close();
 //       window.removeEventListener('storage', handleStorage);
@@ -146,6 +174,7 @@
 //     };
 //   }, []);
 
+//   // Tick simulation for candlestick chart
 //   useEffect(() => {
 //     const interval = setInterval(() => {
 //       const delta = (Math.random() - 0.49) * 0.00012;
@@ -190,6 +219,7 @@
 //     return () => clearInterval(interval);
 //   }, []);
 
+//   // Trade Resolution Timer & Closed Trades Persistence
 //   useEffect(() => {
 //     const tradeInterval = setInterval(() => {
 //       setActiveTrades((prevTrades) => {
@@ -232,7 +262,14 @@
 //               closedAt: new Date().toLocaleTimeString()
 //             };
 
-//             setClosedTrades((closed) => [closedTrade, ...closed]);
+//             // Save closed trade permanently to state and localStorage
+//             setClosedTrades((closed) => {
+//               const updated = [closedTrade, ...closed].slice(0, 50);
+//               try {
+//                 localStorage.setItem('trading_closed_trades', JSON.stringify(updated));
+//               } catch (e) {}
+//               return updated;
+//             });
 //           } else {
 //             updatedTrades.push({
 //               ...trade,
@@ -248,7 +285,7 @@
 //     return () => clearInterval(tradeInterval);
 //   }, []);
 
-//   // Canvas rendering with vertical lines, timeframe labels, and mobile responsiveness
+//   // HTML5 Canvas Candlestick Rendering
 //   useEffect(() => {
 //     const canvas = canvasRef.current;
 //     if (!canvas) return;
@@ -281,7 +318,6 @@
 //       const maxPrice = 0.70050;
 //       const priceRange = maxPrice - minPrice;
 
-//       // Horizontal Grid Lines & Price Axis
 //       for (let p = 0.69750; p <= 0.70000; p += 0.00050) {
 //         const y = chartHeight - ((p - minPrice) / priceRange) * chartHeight;
 //         ctx.beginPath();
@@ -297,7 +333,6 @@
 //       const candles = candlesRef.current;
 //       const candleWidth = Math.max(4, Math.floor((chartWidth - 20) / candles.length));
 
-//       // Draw Candlesticks & Time Labels at Bottom
 //       candles.forEach((c, i) => {
 //         const x = i * candleWidth + 10;
 //         const openY = chartHeight - ((c.open - minPrice) / priceRange) * chartHeight;
@@ -309,7 +344,7 @@
 //         const color = isGreen ? '#22c55e' : '#ef4444';
 
 //         ctx.strokeStyle = color;
-//         ctx.lineWidth = 1.5;
+//         ctx.lineWidth = 1.2;
 //         ctx.beginPath();
 //         ctx.moveTo(x + candleWidth / 2, highY);
 //         ctx.lineTo(x + candleWidth / 2, lowY);
@@ -317,10 +352,9 @@
 
 //         ctx.fillStyle = color;
 //         const bodyY = Math.min(openY, closeY);
-//         const bodyHeight = Math.max(Math.abs(closeY - openY), 3);
+//         const bodyHeight = Math.max(Math.abs(closeY - openY), 2);
 //         ctx.fillRect(x + 1, bodyY, Math.max(candleWidth - 2, 2), bodyHeight);
 
-//         // Bottom Time Axis Labels (e.g., 08:00, 10:00, 12:06)
 //         if (c.timeLabel && (i % 2 === 0 || i === candles.length - 1)) {
 //           ctx.fillStyle = '#616e85';
 //           ctx.font = '9px sans-serif';
@@ -328,7 +362,6 @@
 //         }
 //       });
 
-//       // --- VERTICAL TIMELINE LINE (Without Text Labels) ---
 //       const middleIndex = Math.floor(candles.length / 2);
 //       const verticalLineX = middleIndex * candleWidth + 10;
 
@@ -341,7 +374,6 @@
 //       ctx.stroke();
 //       ctx.setLineDash([]);
 
-//       // Active Trades Entry Lines
 //       activeTrades.forEach((trade) => {
 //         const tradeY = chartHeight - ((trade.entryPrice - minPrice) / priceRange) * chartHeight;
 //         ctx.setLineDash([2, 2]);
@@ -359,7 +391,6 @@
 //         ctx.fillText(`${trade.type} $${trade.amount}`, chartWidth - 52, tradeY + 2);
 //       });
 
-//       // Current Price Line
 //       const currentY = chartHeight - ((currentPrice - minPrice) / priceRange) * chartHeight;
 //       ctx.setLineDash([3, 3]);
 //       ctx.strokeStyle = '#2563eb';
@@ -384,8 +415,14 @@
 //   }, [currentPrice, timerCountdown, activeTrades]);
 
 //   const handleTrade = (type) => {
-//     if (investment > balance) {
-//       triggerToast('Insufficient Balance!', 'loss');
+//     const tradeAmt = Number(investment);
+//     if (!tradeAmt || tradeAmt <= 0) {
+//       triggerToast('Please enter a valid investment amount!', 'loss');
+//       return;
+//     }
+
+//     if (tradeAmt > balance) {
+//       triggerToast('Insufficient Live Balance!', 'loss');
 //       return;
 //     }
 
@@ -393,7 +430,7 @@
 //       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
 //       asset: selectedAsset.symbol,
 //       payout: selectedAsset.payout,
-//       amount: investment,
+//       amount: tradeAmt,
 //       type: type,
 //       entryPrice: currentPrice,
 //       duration: selectedExpiry.seconds,
@@ -401,101 +438,101 @@
 //       time: new Date().toLocaleTimeString()
 //     };
 
-//     const newBal = +(balance - investment).toFixed(2);
+//     const newBal = +(balance - tradeAmt).toFixed(2);
 //     setBalance(newBal);
 //     syncBalanceToServer(newBal);
+
 //     setActiveTrades((prev) => [newTrade, ...prev]);
 //   };
 
 //   return (
-//     <div className="flex flex-col h-screen h-[100dvh] w-full max-w-full bg-[#0d121d] text-gray-200 overflow-hidden font-sans select-none relative">
-
-//       <Toast toastNotification={toastNotification} />
-
-//       <Header 
-//         balance={balance} 
-//         showTradesDrawer={showTradesDrawer} 
-//         setShowTradesDrawer={setShowTradesDrawer} 
-//         activeTradesCount={activeTrades.length} 
-//       />
-
-//       {showBonus && (
-//         <div className="bg-[#1bb954] text-white text-xs py-1 px-3 flex items-center justify-between shrink-0 z-10">
-//           <div className="flex items-center space-x-1.5 sm:space-x-2 overflow-hidden text-ellipsis whitespace-nowrap">
-//             <span>🚀</span>
-//             <span className="font-semibold text-[10px] sm:text-xs truncate">
-//               Get a <strong className="underline">50% bonus</strong> on your deposit!
-//             </span>
-//             <span className="bg-[#14863c] text-white text-[9px] sm:text-[10px] font-bold px-1.5 py-0.5 rounded-md shrink-0">50%</span>
-//           </div>
-//           <button onClick={() => setShowBonus(false)} className="text-white hover:opacity-80 ml-2 shrink-0">
-//             <X className="w-3.5 h-3.5" />
-//           </button>
-//         </div>
+//     <div className="flex flex-col h-screen w-full bg-[#0d121d] text-gray-200 overflow-hidden font-sans select-none">
+      
+//       {toastNotification && (
+//         <Toast 
+//           message={toastNotification.message} 
+//           type={toastNotification.type} 
+//           onClose={() => setToastNotification(null)} 
+//         />
 //       )}
 
-//       <div className="flex flex-1 flex-col md:flex-row overflow-hidden relative">
+//       {/* Top Header */}
+//       <Header 
+//         balance={balance} 
+//         activeTradesCount={activeTrades.length}
+//         showTradesDrawer={showTradesDrawer}
+//         setShowTradesDrawer={setShowTradesDrawer}
+//       />
 
+//       <div className="flex flex-1 overflow-hidden relative">
+//         {/* Left Sidebar */}
 //         <Sidebar 
 //           activeTab={activeTab} 
-//           setActiveTab={setActiveTab} 
-//           showTradesDrawer={showTradesDrawer} 
-//           setShowTradesDrawer={setShowTradesDrawer} 
-//           activeTradesCount={activeTrades.length} 
+//           setActiveTab={setActiveTab}
+//           showTradesDrawer={showTradesDrawer}
+//           setShowTradesDrawer={setShowTradesDrawer}
+//           activeTradesCount={activeTrades.length}
 //         />
 
-//         <main className="flex-1 flex flex-col relative bg-[#0d121d] overflow-hidden">
-           
-//           <div className="absolute top-3 left-3 z-20 flex items-center space-x-2">
-//             <div className="relative">
-//               <button 
-//                 onClick={() => setIsAssetDropdownOpen(!isAssetDropdownOpen)}
-//                 className="flex items-center space-x-2 bg-[#182335]/90 backdrop-blur px-3 py-1.5 rounded-lg border border-gray-700 hover:border-gray-500 transition cursor-pointer"
-//               >
-//                 <span className="text-base">{selectedAsset.flag}</span>
-//                 <span className="text-xs font-bold text-white">{selectedAsset.symbol}</span>
-//                 <span className="text-xs text-emerald-400 font-bold">{selectedAsset.payout}%</span>
-//                 <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+//         {/* Center Chart */}
+//         <main className="flex-1 flex flex-col relative overflow-hidden bg-[#0d121d]">
+//           {showBonus && (
+//             <div className="bg-[#22c55e] text-black text-xs font-bold py-1.5 px-4 flex justify-between items-center z-10">
+//               <div className="flex items-center space-x-2">
+//                 <span>🚀 Get a <span className="underline cursor-pointer">50% bonus</span> on your deposit!</span>
+//               </div>
+//               <button onClick={() => setShowBonus(false)} className="hover:opacity-75">
+//                 <X className="w-4 h-4 stroke-[3]" />
 //               </button>
-
-//               {isAssetDropdownOpen && (
-//                 <div className="absolute top-10 left-0 w-56 bg-[#121927] border border-gray-700 rounded-lg shadow-xl py-1 z-50">
-//                   <div className="px-3 py-1.5 text-[10px] font-bold text-gray-400 border-b border-gray-800">
-//                     SELECT ASSET PAIR
-//                   </div>
-//                   {ASSETS.map((asset) => (
-//                     <button
-//                       key={asset.symbol}
-//                       onClick={() => {
-//                         setSelectedAsset(asset);
-//                         setIsAssetDropdownOpen(false);
-//                       }}
-//                       className="w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-[#1c2638] transition cursor-pointer"
-//                     >
-//                       <div className="flex items-center space-x-2">
-//                         <span>{asset.flag}</span>
-//                         <span className="font-bold text-white">{asset.symbol}</span>
-//                       </div>
-//                       <span className="text-emerald-400 font-bold">{asset.payout}%</span>
-//                     </button>
-//                   ))}
-//                 </div>
-//               )}
 //             </div>
+//           )}
+
+//           {/* Asset Selector Header */}
+//           <div className="absolute top-8 left-4 z-20 flex items-center space-x-2">
+//             <button 
+//               onClick={() => setIsAssetDropdownOpen(!isAssetDropdownOpen)}
+//               className="flex items-center space-x-2 bg-[#121927]/90 backdrop-blur border border-gray-800 hover:border-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition shadow-lg cursor-pointer"
+//             >
+//               <span>{selectedAsset.flag}</span>
+//               <span>{selectedAsset.symbol}</span>
+//               <span className="text-emerald-400 text-[10px]">{selectedAsset.payout}%</span>
+//               <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+//             </button>
+
+//             {isAssetDropdownOpen && (
+//               <div className="absolute top-10 left-0 bg-[#121927] border border-gray-800 rounded-lg shadow-2xl p-1 w-48 z-30 space-y-0.5">
+//                 {ASSETS.map((asset) => (
+//                   <div
+//                     key={asset.symbol}
+//                     onClick={() => {
+//                       setSelectedAsset(asset);
+//                       setIsAssetDropdownOpen(false);
+//                     }}
+//                     className="flex justify-between items-center px-3 py-2 hover:bg-[#182335] rounded-md cursor-pointer text-xs"
+//                   >
+//                     <div className="flex items-center space-x-2">
+//                       <span>{asset.flag}</span>
+//                       <span className="font-semibold text-white">{asset.symbol}</span>
+//                     </div>
+//                     <span className="text-emerald-400 text-[10px] font-bold">{asset.payout}%</span>
+//                   </div>
+//                 ))}
+//               </div>
+//             )}
 //           </div>
 
-//           <div className="flex-1 relative w-full h-full min-h-[160px]">
-//             <canvas ref={canvasRef} className="w-full h-full block" />
+//           <div className="flex-1 relative w-full h-full">
+//             <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
 //           </div>
 
-//           {/* Mobile bottom controls optimized for all phone sizes */}
-//           <div className="bg-[#121927] border-t border-gray-800 p-2 sm:p-3 space-y-2 md:hidden shrink-0">
-//             <div className="flex justify-between items-center space-x-1">
-//               {EXPIRY_TIMES.map((t) => (
+//           {/* Mobile Bottom Control Sheet */}
+//           <div className="md:hidden bg-[#121927] border-t border-gray-800 p-2.5 space-y-2 z-20">
+//             <div className="grid grid-cols-5 gap-1">
+//               {EXPIRY_TIMES.slice(0, 5).map((t) => (
 //                 <button
 //                   key={t.label}
 //                   onClick={() => setSelectedExpiry(t)}
-//                   className={`flex-1 py-1 rounded text-[10px] font-bold ${
+//                   className={`py-1 rounded text-[10px] font-bold transition ${
 //                     selectedExpiry.seconds === t.seconds
 //                       ? 'bg-blue-600 text-white'
 //                       : 'bg-[#1a2332] text-gray-400'
@@ -512,13 +549,23 @@
 //                 <span className="text-xs font-bold text-white">{selectedExpiry.label}</span>
 //               </div>
 
+//               {/* Mobile Investment Amount with Direct Typing */}
 //               <div className="bg-[#1a2332] border border-gray-700/80 rounded-lg p-1.5 relative">
 //                 <span className="text-[9px] text-gray-400">Investment</span>
 //                 <div className="flex justify-between items-center mt-0.5">
-//                   <button onClick={() => setInvestment(p => Math.max(10, p - 10))} className="w-5 h-5 bg-[#253247] rounded flex items-center justify-center text-gray-300">
+//                   <button onClick={() => setInvestment(p => Math.max(1, p - 10))} className="w-5 h-5 bg-[#253247] rounded flex items-center justify-center text-gray-300">
 //                     <Minus className="w-3 h-3" />
 //                   </button>
-//                   <span className="text-xs font-bold text-white">${investment}</span>
+//                   <div className="flex items-center justify-center">
+//                     <span className="text-xs font-bold text-gray-400 mr-0.5">$</span>
+//                     <input 
+//                       type="number"
+//                       min="1"
+//                       value={investment}
+//                       onChange={(e) => setInvestment(Math.max(1, Number(e.target.value) || 0))}
+//                       className="w-14 bg-transparent text-center font-mono text-xs font-bold text-white outline-none"
+//                     />
+//                   </div>
 //                   <button onClick={() => setInvestment(p => p + 10)} className="w-5 h-5 bg-[#253247] rounded flex items-center justify-center text-gray-300">
 //                     <Plus className="w-3 h-3" />
 //                   </button>
@@ -531,6 +578,7 @@
 //               <span className="text-emerald-400 font-bold text-xs">${(investment + (investment * selectedAsset.payout / 100)).toFixed(0)}</span>
 //             </div>
 
+//             {/* Mobile Buy & Sell Buttons with Equal Arrow Alignment */}
 //             <div className="grid grid-cols-2 gap-2">
 //               <button 
 //                 onClick={() => handleTrade('UP')}
@@ -548,14 +596,50 @@
 //                 <ArrowDown className="w-4 h-4 stroke-[3] text-white" />
 //               </button>
 //             </div>
+
+//             {/* Mobile Bottom Navigation Bar */}
+//             <div className="flex justify-around items-center pt-1 border-t border-gray-800 text-gray-400">
+//               <button onClick={() => setActiveTab('trade')} className={`flex flex-col items-center ${activeTab === 'trade' ? 'text-emerald-400' : ''}`}>
+//                 <BarChart2 className="w-4 h-4" />
+//                 <span className="text-[8px]">Trade</span>
+//               </button>
+//               <button onClick={() => setShowTradesDrawer(!showTradesDrawer)} className={`flex flex-col items-center relative ${showTradesDrawer ? 'text-blue-400' : ''}`}>
+//                 <History className="w-4 h-4" />
+//                 {activeTrades.length > 0 && (
+//                   <span className="absolute -top-1 right-0 bg-emerald-500 text-black text-[7px] rounded-full px-1 font-bold">
+//                     {activeTrades.length}
+//                   </span>
+//                 )}
+//                 <span className="text-[8px]">Trades</span>
+//               </button>
+//               <button onClick={() => navigate('/support')} className="flex flex-col items-center">
+//                 <HelpCircle className="w-4 h-4" />
+//                 <span className="text-[8px]">Support</span>
+//               </button>
+//               <button onClick={() => navigate('/account')} className="flex flex-col items-center">
+//                 <User className="w-4 h-4" />
+//                 <span className="text-[8px]">Account</span>
+//               </button>
+//               <button onClick={() => navigate('/tournment/active')} className="flex flex-col items-center">
+//                 <Trophy className="w-4 h-4" />
+//                 <span className="text-[8px]">Tournaments</span>
+//               </button>
+//               <button onClick={() => navigate('/invest')} className="flex flex-col items-center">
+//                 <TrendingUp className="w-4 h-4" />
+//                 <span className="text-[8px]">Invest</span>
+//               </button>
+//             </div>
 //           </div>
 //         </main>
 
+//         {/* Right Trading Sidebar (Desktop) */}
 //         <aside className="w-72 bg-[#121927] border-l border-gray-800 p-4 hidden md:flex flex-col justify-between shrink-0">
 //           <div className="space-y-4">
+            
+//             {/* Asset Selector */}
 //             <div 
 //               onClick={() => setIsAssetDropdownOpen(!isAssetDropdownOpen)}
-//               className="flex justify-between items-center bg-[#182335] p-2.5 rounded-lg border border-gray-800 cursor-pointer"
+//               className="flex justify-between items-center bg-[#182335] p-2.5 rounded-lg border border-gray-800 cursor-pointer hover:border-gray-700 transition"
 //             >
 //               <div className="flex items-center space-x-2">
 //                 <span className="text-base">{selectedAsset.flag}</span>
@@ -569,6 +653,7 @@
 //               <ChevronDown className="w-4 h-4 text-gray-400" />
 //             </div>
 
+//             {/* Expiration Time */}
 //             <div>
 //               <div className="text-[11px] text-gray-400 mb-1.5">Expiration Time</div>
 //               <div className="grid grid-cols-3 gap-1.5">
@@ -576,10 +661,10 @@
 //                   <button
 //                     key={t.label}
 //                     onClick={() => setSelectedExpiry(t)}
-//                     className={`py-1.5 rounded-md text-xs font-bold border transition ${
+//                     className={`py-1.5 rounded-md text-xs font-bold border transition cursor-pointer ${
 //                       selectedExpiry.seconds === t.seconds
 //                         ? 'bg-blue-600 border-blue-500 text-white'
-//                         : 'bg-[#182335] border-gray-800 text-gray-400'
+//                         : 'bg-[#182335] border-gray-800 text-gray-400 hover:border-gray-700'
 //                     }`}
 //                   >
 //                     {t.label}
@@ -588,20 +673,37 @@
 //               </div>
 //             </div>
 
+//             {/* Investment Amount with Direct Typing Input */}
 //             <div>
 //               <div className="text-[11px] text-gray-400 mb-1">Investment Amount</div>
 //               <div className="flex items-center bg-[#182335] border border-gray-700 rounded-lg p-1.5 justify-between">
-//                 <button onClick={() => setInvestment(p => Math.max(10, p - 10))} className="p-1 text-gray-300"><Minus className="w-4 h-4" /></button>
-//                 <div className="font-mono text-sm font-bold text-white">${investment}</div>
-//                 <button onClick={() => setInvestment(p => p + 10)} className="p-1 text-gray-300"><Plus className="w-4 h-4" /></button>
+//                 <button onClick={() => setInvestment(p => Math.max(1, p - 10))} className="p-1 text-gray-300 hover:text-white cursor-pointer">
+//                   <Minus className="w-4 h-4" />
+//                 </button>
+//                 <div className="flex items-center justify-center">
+//                   <span className="text-sm font-bold text-gray-400 mr-0.5">$</span>
+//                   <input 
+//                     type="number"
+//                     min="1"
+//                     value={investment}
+//                     onChange={(e) => setInvestment(Math.max(1, Number(e.target.value) || 0))}
+//                     className="w-20 bg-transparent text-center font-mono text-sm font-bold text-white outline-none"
+//                   />
+//                 </div>
+//                 <button onClick={() => setInvestment(p => p + 10)} className="p-1 text-gray-300 hover:text-white cursor-pointer">
+//                   <Plus className="w-4 h-4" />
+//                 </button>
 //               </div>
 
+//               {/* Quick Select Presets */}
 //               <div className="grid grid-cols-4 gap-1 mt-2">
 //                 {[10, 50, 100, 500].map((amt) => (
 //                   <button
 //                     key={amt}
 //                     onClick={() => setInvestment(amt)}
-//                     className="bg-[#182335] text-[10px] font-bold py-1 rounded text-gray-300 border border-gray-800"
+//                     className={`text-[10px] font-bold py-1 rounded transition border cursor-pointer ${
+//                       investment === amt ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#182335] text-gray-300 border-gray-800 hover:border-gray-700'
+//                     }`}
 //                   >
 //                     ${amt}
 //                   </button>
@@ -609,6 +711,7 @@
 //               </div>
 //             </div>
 
+//             {/* Payout Calculation */}
 //             <div className="flex justify-between items-center text-xs py-2 border-t border-b border-gray-800">
 //               <span className="text-gray-400">Payout (+{selectedAsset.payout}%):</span>
 //               <span className="text-emerald-400 font-bold text-base">
@@ -616,26 +719,29 @@
 //               </span>
 //             </div>
 
+//             {/* Buy and Sell Action Buttons (Right-aligned Arrows on Both) */}
 //             <div className="space-y-2 pt-1">
 //               <button 
 //                 onClick={() => handleTrade('UP')}
-//                 className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-extrabold py-3.5 rounded-xl flex items-center justify-between px-5 transition shadow-lg"
+//                 className="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-black font-extrabold py-3.5 rounded-xl flex items-center justify-between px-5 transition shadow-lg cursor-pointer"
 //               >
-//                 <span className="text-base">Buy</span>
+//                 <span className="text-base font-bold">Buy</span>
 //                 <ArrowUp className="w-5 h-5 stroke-[3]" />
 //               </button>
 
 //               <button 
 //                 onClick={() => handleTrade('DOWN')}
-//                 className="w-full bg-red-500 hover:bg-red-600 text-white font-extrabold py-3.5 rounded-xl flex items-center justify-between px-5 transition shadow-lg"
+//                 className="w-full bg-[#ef4444] hover:bg-red-600 active:scale-95 text-white font-extrabold py-3.5 rounded-xl flex items-center justify-between px-5 transition shadow-lg cursor-pointer"
 //               >
-//                 <span className="text-base">Sell</span>
+//                 <span className="text-base font-bold">Sell</span>
 //                 <ArrowDown className="w-5 h-5 stroke-[3]" />
 //               </button>
 //             </div>
+
 //           </div>
 //         </aside>
 
+//         {/* Persistent Trades Drawer (Active & Closed Trades History) */}
 //         <TradesDrawer 
 //           showTradesDrawer={showTradesDrawer}
 //           setShowTradesDrawer={setShowTradesDrawer}
@@ -654,7 +760,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   ChevronDown, Plus, Minus, ArrowUp, ArrowDown, 
-  ShieldCheck, X, BarChart2, History, HelpCircle, User, Trophy, Store 
+  ShieldCheck, X, BarChart2, History, HelpCircle, User, Trophy, TrendingUp 
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
@@ -666,6 +772,8 @@ import TradesDrawer from './TradesDrawer';
 
 export default function TradingTerminal() {
   const navigate = useNavigate();
+
+  // 1. Live Balance (Default 0 for new sessions unless logged in with balance)
   const [balance, setBalance] = useState(() => {
     const saved = localStorage.getItem('trading_live_balance');
     return saved && !isNaN(Number(saved)) ? Number(saved) : 0;
@@ -678,7 +786,17 @@ export default function TradingTerminal() {
   const [activeTab, setActiveTab] = useState('trade');
 
   const [activeTrades, setActiveTrades] = useState([]);
-  const [closedTrades, setClosedTrades] = useState([]);
+
+  // 2. Closed Trades Persistent State from LocalStorage
+  const [closedTrades, setClosedTrades] = useState(() => {
+    try {
+      const saved = localStorage.getItem('trading_closed_trades');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
   const [showTradesDrawer, setShowTradesDrawer] = useState(false);
   const [tradesDrawerTab, setTradesDrawerTab] = useState('active');
 
@@ -690,6 +808,7 @@ export default function TradingTerminal() {
   const processedTradeIdsRef = useRef(new Set());
   const canvasRef = useRef(null);
   
+  // Real-looking candles data for canvas rendering
   const candlesRef = useRef([
     { open: 0.69830, high: 0.69920, low: 0.69800, close: 0.69880, timeLabel: '08:00' },
     { open: 0.69880, high: 0.69900, low: 0.69840, close: 0.69850, timeLabel: '09:00' },
@@ -723,6 +842,7 @@ export default function TradingTerminal() {
     activeTradesRef.current = activeTrades;
   }, [activeTrades]);
 
+  // Sync Live Balance to server with User Identification
   const syncBalanceToServer = async (newBal) => {
     try {
       const numBal = Number(newBal);
@@ -733,31 +853,79 @@ export default function TradingTerminal() {
         bc.close();
       } catch (e) {}
 
-      await fetch(`${process.env.REACT_APP_API_URL}/api/payments/set-user-balance`, {
+      const userId = localStorage.getItem('userId') || '';
+      const email = localStorage.getItem('userEmail') || '';
+      const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/['"]+/g, '').trim();
+
+      // 1. Sync via Profile PUT (100% Isolated & Works on Vercel)
+      if (userId) {
+        await fetch(`${API_URL}/api/users/profile/${userId}`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ balance: numBal })
+        });
+      }
+
+      // 2. Also sync via payments endpoint
+      await fetch(`${API_URL}/api/payments/set-user-balance`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ balanceUSD: numBal })
+        body: JSON.stringify({ balanceUSD: numBal, userId, email })
       });
     } catch (err) {
       console.error('Error syncing balance to server:', err);
     }
   };
 
+  // Fetch Live Balance specifically for the Logged-in User (Isolated)
   const fetchUserBalance = async () => {
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/payments/live-balance`);
+      const userId = localStorage.getItem('userId') || '';
+      const email = (localStorage.getItem('userEmail') || '').toLowerCase().trim();
+      const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/['"]+/g, '').trim();
+
+      if (activeTradesRef.current.length > 0) return;
+
+      // Priority 1: User Profile Endpoint (Strictly Isolated by User ID)
+      if (userId) {
+        const profileRes = await fetch(`${API_URL}/api/users/profile/${userId}`);
+        if (profileRes.ok) {
+          const profileData = await profileRes.json();
+          if (profileData.success && profileData.user && profileData.user.balance !== undefined) {
+            const parsed = Number(profileData.user.balance);
+            if (!isNaN(parsed) && activeTradesRef.current.length === 0) {
+              setBalance(parsed);
+              localStorage.setItem('trading_live_balance', parsed.toString());
+              return;
+            }
+          }
+        }
+      }
+
+      // Priority 2: Fallback to live-balance with User Guard
+      const params = new URLSearchParams();
+      if (userId) params.append('userId', userId);
+      if (email) params.append('email', email);
+
+      const res = await fetch(`${API_URL}/api/payments/live-balance?${params.toString()}`, {
+        headers: { 'x-user-id': userId, 'x-user-email': email }
+      });
       if (!res.ok) return;
 
       const data = await res.json();
       if (data.success) {
+        // Balance Guard: If response email belongs to a different user, ignore it!
+        const resEmail = (data.user?.email || '').toLowerCase().trim();
+        if (email && resEmail && resEmail !== email) {
+          return;
+        }
+
         const rawBal = data.liveBalance ?? data.balance ?? data.user?.balance;
         if (rawBal !== undefined && rawBal !== null) {
           const parsed = Number(rawBal);
-          if (!isNaN(parsed)) {
-            if (activeTradesRef.current.length === 0) {
-              setBalance(parsed);
-              localStorage.setItem('trading_live_balance', parsed.toString());
-            }
+          if (!isNaN(parsed) && activeTradesRef.current.length === 0) {
+            setBalance(parsed);
+            localStorage.setItem('trading_live_balance', parsed.toString());
           }
         }
       }
@@ -790,7 +958,7 @@ export default function TradingTerminal() {
     };
     window.addEventListener('storage', handleStorage);
 
-    const balanceInterval = setInterval(fetchUserBalance, 1000);
+    const balanceInterval = setInterval(fetchUserBalance, 3000);
     return () => {
       if (channel) channel.close();
       window.removeEventListener('storage', handleStorage);
@@ -798,6 +966,7 @@ export default function TradingTerminal() {
     };
   }, []);
 
+  // Tick simulation for candlestick chart
   useEffect(() => {
     const interval = setInterval(() => {
       const delta = (Math.random() - 0.49) * 0.00012;
@@ -842,6 +1011,7 @@ export default function TradingTerminal() {
     return () => clearInterval(interval);
   }, []);
 
+  // Trade Resolution Timer & Closed Trades Persistence
   useEffect(() => {
     const tradeInterval = setInterval(() => {
       setActiveTrades((prevTrades) => {
@@ -884,7 +1054,14 @@ export default function TradingTerminal() {
               closedAt: new Date().toLocaleTimeString()
             };
 
-            setClosedTrades((closed) => [closedTrade, ...closed]);
+            // Save closed trade permanently to state and localStorage
+            setClosedTrades((closed) => {
+              const updated = [closedTrade, ...closed].slice(0, 50);
+              try {
+                localStorage.setItem('trading_closed_trades', JSON.stringify(updated));
+              } catch (e) {}
+              return updated;
+            });
           } else {
             updatedTrades.push({
               ...trade,
@@ -900,6 +1077,7 @@ export default function TradingTerminal() {
     return () => clearInterval(tradeInterval);
   }, []);
 
+  // HTML5 Canvas Candlestick Rendering
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -958,7 +1136,7 @@ export default function TradingTerminal() {
         const color = isGreen ? '#22c55e' : '#ef4444';
 
         ctx.strokeStyle = color;
-        ctx.lineWidth = 1.5;
+        ctx.lineWidth = 1.2;
         ctx.beginPath();
         ctx.moveTo(x + candleWidth / 2, highY);
         ctx.lineTo(x + candleWidth / 2, lowY);
@@ -966,7 +1144,7 @@ export default function TradingTerminal() {
 
         ctx.fillStyle = color;
         const bodyY = Math.min(openY, closeY);
-        const bodyHeight = Math.max(Math.abs(closeY - openY), 3);
+        const bodyHeight = Math.max(Math.abs(closeY - openY), 2);
         ctx.fillRect(x + 1, bodyY, Math.max(candleWidth - 2, 2), bodyHeight);
 
         if (c.timeLabel && (i % 2 === 0 || i === candles.length - 1)) {
@@ -1029,8 +1207,14 @@ export default function TradingTerminal() {
   }, [currentPrice, timerCountdown, activeTrades]);
 
   const handleTrade = (type) => {
-    if (investment > balance) {
-      triggerToast('Insufficient Balance!', 'loss');
+    const tradeAmt = Number(investment);
+    if (!tradeAmt || tradeAmt <= 0) {
+      triggerToast('Please enter a valid investment amount!', 'loss');
+      return;
+    }
+
+    if (tradeAmt > balance) {
+      triggerToast('Insufficient Live Balance!', 'loss');
       return;
     }
 
@@ -1038,7 +1222,7 @@ export default function TradingTerminal() {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       asset: selectedAsset.symbol,
       payout: selectedAsset.payout,
-      amount: investment,
+      amount: tradeAmt,
       type: type,
       entryPrice: currentPrice,
       duration: selectedExpiry.seconds,
@@ -1046,100 +1230,101 @@ export default function TradingTerminal() {
       time: new Date().toLocaleTimeString()
     };
 
-    const newBal = +(balance - investment).toFixed(2);
+    const newBal = +(balance - tradeAmt).toFixed(2);
     setBalance(newBal);
     syncBalanceToServer(newBal);
+
     setActiveTrades((prev) => [newTrade, ...prev]);
   };
 
   return (
-    <div className="flex flex-col h-[100dvh] w-full max-w-full bg-[#0d121d] text-gray-200 overflow-hidden font-sans select-none relative">
-
-      <Toast toastNotification={toastNotification} />
-
-      <Header 
-        balance={balance} 
-        showTradesDrawer={showTradesDrawer} 
-        setShowTradesDrawer={setShowTradesDrawer} 
-        activeTradesCount={activeTrades.length} 
-      />
-
-      {showBonus && (
-        <div className="bg-[#1bb954] text-white text-[11px] py-0.5 px-3 flex items-center justify-between shrink-0 z-10">
-          <div className="flex items-center space-x-1.5 truncate">
-            <span>🚀</span>
-            <span className="font-semibold truncate">
-              Get a <strong className="underline">50% bonus</strong> on your deposit!
-            </span>
-          </div>
-          <button onClick={() => setShowBonus(false)} className="text-white hover:opacity-80 ml-2 shrink-0">
-            <X className="w-3.5 h-3.5" />
-          </button>
-        </div>
+    <div className="flex flex-col h-screen w-full bg-[#0d121d] text-gray-200 overflow-hidden font-sans select-none">
+      
+      {toastNotification && (
+        <Toast 
+          message={toastNotification.message} 
+          type={toastNotification.type} 
+          onClose={() => setToastNotification(null)} 
+        />
       )}
 
-      <div className="flex flex-1 flex-col md:flex-row overflow-hidden relative">
+      {/* Top Header */}
+      <Header 
+        balance={balance} 
+        activeTradesCount={activeTrades.length}
+        showTradesDrawer={showTradesDrawer}
+        setShowTradesDrawer={setShowTradesDrawer}
+      />
 
+      <div className="flex flex-1 overflow-hidden relative">
+        {/* Left Sidebar */}
         <Sidebar 
           activeTab={activeTab} 
-          setActiveTab={setActiveTab} 
-          showTradesDrawer={showTradesDrawer} 
-          setShowTradesDrawer={setShowTradesDrawer} 
-          activeTradesCount={activeTrades.length} 
+          setActiveTab={setActiveTab}
+          showTradesDrawer={showTradesDrawer}
+          setShowTradesDrawer={setShowTradesDrawer}
+          activeTradesCount={activeTrades.length}
         />
 
-        <main className="flex-1 flex flex-col relative bg-[#0d121d] overflow-hidden">
-           
-          <div className="absolute top-2 left-2 z-20 flex items-center space-x-2">
-            <div className="relative">
-              <button 
-                onClick={() => setIsAssetDropdownOpen(!isAssetDropdownOpen)}
-                className="flex items-center space-x-1.5 bg-[#182335]/90 backdrop-blur px-2.5 py-1 rounded-lg border border-gray-700 hover:border-gray-500 transition cursor-pointer text-xs"
-              >
-                <span>{selectedAsset.flag}</span>
-                <span className="font-bold text-white">{selectedAsset.symbol}</span>
-                <span className="text-emerald-400 font-bold">{selectedAsset.payout}%</span>
-                <ChevronDown className="w-3 h-3 text-gray-400" />
+        {/* Center Chart */}
+        <main className="flex-1 flex flex-col relative overflow-hidden bg-[#0d121d]">
+          {showBonus && (
+            <div className="bg-[#22c55e] text-black text-xs font-bold py-1.5 px-4 flex justify-between items-center z-10">
+              <div className="flex items-center space-x-2">
+                <span>🚀 Get a <span className="underline cursor-pointer">50% bonus</span> on your deposit!</span>
+              </div>
+              <button onClick={() => setShowBonus(false)} className="hover:opacity-75">
+                <X className="w-4 h-4 stroke-[3]" />
               </button>
-
-              {isAssetDropdownOpen && (
-                <div className="absolute top-9 left-0 w-52 bg-[#121927] border border-gray-700 rounded-lg shadow-xl py-1 z-50">
-                  <div className="px-3 py-1 text-[10px] font-bold text-gray-400 border-b border-gray-800">
-                    SELECT ASSET PAIR
-                  </div>
-                  {ASSETS.map((asset) => (
-                    <button
-                      key={asset.symbol}
-                      onClick={() => {
-                        setSelectedAsset(asset);
-                        setIsAssetDropdownOpen(false);
-                      }}
-                      className="w-full flex items-center justify-between px-3 py-2 text-xs hover:bg-[#1c2638] transition cursor-pointer"
-                    >
-                      <div className="flex items-center space-x-2">
-                        <span>{asset.flag}</span>
-                        <span className="font-bold text-white">{asset.symbol}</span>
-                      </div>
-                      <span className="text-emerald-400 font-bold">{asset.payout}%</span>
-                    </button>
-                  ))}
-                </div>
-              )}
             </div>
+          )}
+
+          {/* Asset Selector Header */}
+          <div className="absolute top-8 left-4 z-20 flex items-center space-x-2">
+            <button 
+              onClick={() => setIsAssetDropdownOpen(!isAssetDropdownOpen)}
+              className="flex items-center space-x-2 bg-[#121927]/90 backdrop-blur border border-gray-800 hover:border-gray-700 px-3 py-1.5 rounded-lg text-xs font-bold text-white transition shadow-lg cursor-pointer"
+            >
+              <span>{selectedAsset.flag}</span>
+              <span>{selectedAsset.symbol}</span>
+              <span className="text-emerald-400 text-[10px]">{selectedAsset.payout}%</span>
+              <ChevronDown className="w-3.5 h-3.5 text-gray-400" />
+            </button>
+
+            {isAssetDropdownOpen && (
+              <div className="absolute top-10 left-0 bg-[#121927] border border-gray-800 rounded-lg shadow-2xl p-1 w-48 z-30 space-y-0.5">
+                {ASSETS.map((asset) => (
+                  <div
+                    key={asset.symbol}
+                    onClick={() => {
+                      setSelectedAsset(asset);
+                      setIsAssetDropdownOpen(false);
+                    }}
+                    className="flex justify-between items-center px-3 py-2 hover:bg-[#182335] rounded-md cursor-pointer text-xs"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span>{asset.flag}</span>
+                      <span className="font-semibold text-white">{asset.symbol}</span>
+                    </div>
+                    <span className="text-emerald-400 text-[10px] font-bold">{asset.payout}%</span>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
-          <div className="flex-1 relative w-full h-full min-h-[100px]">
-            <canvas ref={canvasRef} className="w-full h-full block" />
+          <div className="flex-1 relative w-full h-full">
+            <canvas ref={canvasRef} className="absolute inset-0 w-full h-full block" />
           </div>
 
-          {/* Ultra-Compact Mobile Controls + Bottom Navbar in Single Screen Fit */}
-          <div className="bg-[#121927] border-t border-gray-800 p-1.5 space-y-1 md:hidden shrink-0">
-            <div className="flex justify-between items-center space-x-1">
-              {EXPIRY_TIMES.map((t) => (
+          {/* Mobile Bottom Control Sheet */}
+          <div className="md:hidden bg-[#121927] border-t border-gray-800 p-2.5 space-y-2 z-20">
+            <div className="grid grid-cols-5 gap-1">
+              {EXPIRY_TIMES.slice(0, 5).map((t) => (
                 <button
                   key={t.label}
                   onClick={() => setSelectedExpiry(t)}
-                  className={`flex-1 py-0.5 rounded text-[9px] font-bold ${
+                  className={`py-1 rounded text-[10px] font-bold transition ${
                     selectedExpiry.seconds === t.seconds
                       ? 'bg-blue-600 text-white'
                       : 'bg-[#1a2332] text-gray-400'
@@ -1150,50 +1335,61 @@ export default function TradingTerminal() {
               ))}
             </div>
 
-            <div className="grid grid-cols-2 gap-1">
-              <div className="bg-[#1a2332] border border-gray-700/80 rounded px-2 py-0.5 flex flex-col justify-center">
-                <span className="text-[8px] text-gray-400">Duration</span>
-                <span className="text-[11px] font-bold text-white">{selectedExpiry.label}</span>
+            <div className="grid grid-cols-2 gap-2">
+              <div className="bg-[#1a2332] border border-gray-700/80 rounded-lg p-1.5 flex flex-col justify-center">
+                <span className="text-[9px] text-gray-400">Duration</span>
+                <span className="text-xs font-bold text-white">{selectedExpiry.label}</span>
               </div>
 
-              <div className="bg-[#1a2332] border border-gray-700/80 rounded px-2 py-0.5 relative">
-                <span className="text-[8px] text-gray-400">Investment</span>
-                <div className="flex justify-between items-center">
-                  <button onClick={() => setInvestment(p => Math.max(10, p - 10))} className="w-4 h-4 bg-[#253247] rounded flex items-center justify-center text-gray-300">
-                    <Minus className="w-2.5 h-2.5" />
+              {/* Mobile Investment Amount with Direct Typing */}
+              <div className="bg-[#1a2332] border border-gray-700/80 rounded-lg p-1.5 relative">
+                <span className="text-[9px] text-gray-400">Investment</span>
+                <div className="flex justify-between items-center mt-0.5">
+                  <button onClick={() => setInvestment(p => Math.max(1, p - 10))} className="w-5 h-5 bg-[#253247] rounded flex items-center justify-center text-gray-300">
+                    <Minus className="w-3 h-3" />
                   </button>
-                  <span className="text-[11px] font-bold text-white">${investment}</span>
-                  <button onClick={() => setInvestment(p => p + 10)} className="w-4 h-4 bg-[#253247] rounded flex items-center justify-center text-gray-300">
-                    <Plus className="w-2.5 h-2.5" />
+                  <div className="flex items-center justify-center">
+                    <span className="text-xs font-bold text-gray-400 mr-0.5">$</span>
+                    <input 
+                      type="number"
+                      min="1"
+                      value={investment}
+                      onChange={(e) => setInvestment(Math.max(1, Number(e.target.value) || 0))}
+                      className="w-14 bg-transparent text-center font-mono text-xs font-bold text-white outline-none"
+                    />
+                  </div>
+                  <button onClick={() => setInvestment(p => p + 10)} className="w-5 h-5 bg-[#253247] rounded flex items-center justify-center text-gray-300">
+                    <Plus className="w-3 h-3" />
                   </button>
                 </div>
               </div>
             </div>
 
-            <div className="flex justify-between items-center text-[10px] px-0.5">
-              <span className="text-gray-400">Payout (+{selectedAsset.payout}%):</span>
-              <span className="text-emerald-400 font-bold">${(investment + (investment * selectedAsset.payout / 100)).toFixed(0)}</span>
+            <div className="flex justify-between items-center text-xs px-1">
+              <span className="text-gray-400 text-[10px]">Payout (+{selectedAsset.payout}%):</span>
+              <span className="text-emerald-400 font-bold text-xs">${(investment + (investment * selectedAsset.payout / 100)).toFixed(0)}</span>
             </div>
 
-            <div className="grid grid-cols-2 gap-1.5">
+            {/* Mobile Buy & Sell Buttons with Equal Arrow Alignment */}
+            <div className="grid grid-cols-2 gap-2">
               <button 
                 onClick={() => handleTrade('UP')}
-                className="bg-[#22c55e] active:scale-95 text-black font-extrabold py-1.5 rounded-lg flex items-center justify-between px-3 text-xs shadow transition"
+                className="bg-[#22c55e] active:scale-95 text-black font-extrabold py-2.5 rounded-lg flex items-center justify-between px-4 text-sm shadow transition"
               >
                 <span>Buy</span>
-                <ArrowUp className="w-3.5 h-3.5 stroke-[3] text-black" />
+                <ArrowUp className="w-4 h-4 stroke-[3] text-black" />
               </button>
 
               <button 
                 onClick={() => handleTrade('DOWN')}
-                className="bg-[#ef4444] active:scale-95 text-white font-extrabold py-1.5 rounded-lg flex items-center justify-between px-3 text-xs shadow transition"
+                className="bg-[#ef4444] active:scale-95 text-white font-extrabold py-2.5 rounded-lg flex items-center justify-between px-4 text-sm shadow transition"
               >
                 <span>Sell</span>
-                <ArrowDown className="w-3.5 h-3.5 stroke-[3] text-white" />
+                <ArrowDown className="w-4 h-4 stroke-[3] text-white" />
               </button>
             </div>
 
-            {/* Mobile Bottom Navigation Bar (Matching Screenshot 3) */}
+            {/* Mobile Bottom Navigation Bar */}
             <div className="flex justify-around items-center pt-1 border-t border-gray-800 text-gray-400">
               <button onClick={() => setActiveTab('trade')} className={`flex flex-col items-center ${activeTab === 'trade' ? 'text-emerald-400' : ''}`}>
                 <BarChart2 className="w-4 h-4" />
@@ -1220,19 +1416,22 @@ export default function TradingTerminal() {
                 <Trophy className="w-4 h-4" />
                 <span className="text-[8px]">Tournaments</span>
               </button>
-              <button onClick={() => navigate('/market')} className="flex flex-col items-center">
-                <Store className="w-4 h-4" />
-                <span className="text-[8px]">Market</span>
+              <button onClick={() => navigate('/invest')} className="flex flex-col items-center">
+                <TrendingUp className="w-4 h-4" />
+                <span className="text-[8px]">Invest</span>
               </button>
             </div>
           </div>
         </main>
 
+        {/* Right Trading Sidebar (Desktop) */}
         <aside className="w-72 bg-[#121927] border-l border-gray-800 p-4 hidden md:flex flex-col justify-between shrink-0">
           <div className="space-y-4">
+            
+            {/* Asset Selector */}
             <div 
               onClick={() => setIsAssetDropdownOpen(!isAssetDropdownOpen)}
-              className="flex justify-between items-center bg-[#182335] p-2.5 rounded-lg border border-gray-800 cursor-pointer"
+              className="flex justify-between items-center bg-[#182335] p-2.5 rounded-lg border border-gray-800 cursor-pointer hover:border-gray-700 transition"
             >
               <div className="flex items-center space-x-2">
                 <span className="text-base">{selectedAsset.flag}</span>
@@ -1246,6 +1445,7 @@ export default function TradingTerminal() {
               <ChevronDown className="w-4 h-4 text-gray-400" />
             </div>
 
+            {/* Expiration Time */}
             <div>
               <div className="text-[11px] text-gray-400 mb-1.5">Expiration Time</div>
               <div className="grid grid-cols-3 gap-1.5">
@@ -1253,10 +1453,10 @@ export default function TradingTerminal() {
                   <button
                     key={t.label}
                     onClick={() => setSelectedExpiry(t)}
-                    className={`py-1.5 rounded-md text-xs font-bold border transition ${
+                    className={`py-1.5 rounded-md text-xs font-bold border transition cursor-pointer ${
                       selectedExpiry.seconds === t.seconds
                         ? 'bg-blue-600 border-blue-500 text-white'
-                        : 'bg-[#182335] border-gray-800 text-gray-400'
+                        : 'bg-[#182335] border-gray-800 text-gray-400 hover:border-gray-700'
                     }`}
                   >
                     {t.label}
@@ -1265,20 +1465,37 @@ export default function TradingTerminal() {
               </div>
             </div>
 
+            {/* Investment Amount with Direct Typing Input */}
             <div>
               <div className="text-[11px] text-gray-400 mb-1">Investment Amount</div>
               <div className="flex items-center bg-[#182335] border border-gray-700 rounded-lg p-1.5 justify-between">
-                <button onClick={() => setInvestment(p => Math.max(10, p - 10))} className="p-1 text-gray-300"><Minus className="w-4 h-4" /></button>
-                <div className="font-mono text-sm font-bold text-white">${investment}</div>
-                <button onClick={() => setInvestment(p => p + 10)} className="p-1 text-gray-300"><Plus className="w-4 h-4" /></button>
+                <button onClick={() => setInvestment(p => Math.max(1, p - 10))} className="p-1 text-gray-300 hover:text-white cursor-pointer">
+                  <Minus className="w-4 h-4" />
+                </button>
+                <div className="flex items-center justify-center">
+                  <span className="text-sm font-bold text-gray-400 mr-0.5">$</span>
+                  <input 
+                    type="number"
+                    min="1"
+                    value={investment}
+                    onChange={(e) => setInvestment(Math.max(1, Number(e.target.value) || 0))}
+                    className="w-20 bg-transparent text-center font-mono text-sm font-bold text-white outline-none"
+                  />
+                </div>
+                <button onClick={() => setInvestment(p => p + 10)} className="p-1 text-gray-300 hover:text-white cursor-pointer">
+                  <Plus className="w-4 h-4" />
+                </button>
               </div>
 
+              {/* Quick Select Presets */}
               <div className="grid grid-cols-4 gap-1 mt-2">
                 {[10, 50, 100, 500].map((amt) => (
                   <button
                     key={amt}
                     onClick={() => setInvestment(amt)}
-                    className="bg-[#182335] text-[10px] font-bold py-1 rounded text-gray-300 border border-gray-800"
+                    className={`text-[10px] font-bold py-1 rounded transition border cursor-pointer ${
+                      investment === amt ? 'bg-blue-600 border-blue-500 text-white' : 'bg-[#182335] text-gray-300 border-gray-800 hover:border-gray-700'
+                    }`}
                   >
                     ${amt}
                   </button>
@@ -1286,6 +1503,7 @@ export default function TradingTerminal() {
               </div>
             </div>
 
+            {/* Payout Calculation */}
             <div className="flex justify-between items-center text-xs py-2 border-t border-b border-gray-800">
               <span className="text-gray-400">Payout (+{selectedAsset.payout}%):</span>
               <span className="text-emerald-400 font-bold text-base">
@@ -1293,26 +1511,29 @@ export default function TradingTerminal() {
               </span>
             </div>
 
+            {/* Buy and Sell Action Buttons (Right-aligned Arrows on Both) */}
             <div className="space-y-2 pt-1">
               <button 
                 onClick={() => handleTrade('UP')}
-                className="w-full bg-emerald-500 hover:bg-emerald-600 text-black font-extrabold py-3.5 rounded-xl flex items-center justify-between px-5 transition shadow-lg"
+                className="w-full bg-emerald-500 hover:bg-emerald-600 active:scale-95 text-black font-extrabold py-3.5 rounded-xl flex items-center justify-between px-5 transition shadow-lg cursor-pointer"
               >
-                <span className="text-base">Buy</span>
+                <span className="text-base font-bold">Buy</span>
                 <ArrowUp className="w-5 h-5 stroke-[3]" />
               </button>
 
               <button 
                 onClick={() => handleTrade('DOWN')}
-                className="w-full bg-red-500 hover:bg-red-600 text-white font-extrabold py-3.5 rounded-xl flex items-center justify-5 transition shadow-lg"
+                className="w-full bg-[#ef4444] hover:bg-red-600 active:scale-95 text-white font-extrabold py-3.5 rounded-xl flex items-center justify-between px-5 transition shadow-lg cursor-pointer"
               >
-                <span className="text-base">Sell</span>
+                <span className="text-base font-bold">Sell</span>
                 <ArrowDown className="w-5 h-5 stroke-[3]" />
               </button>
             </div>
+
           </div>
         </aside>
 
+        {/* Persistent Trades Drawer (Active & Closed Trades History) */}
         <TradesDrawer 
           showTradesDrawer={showTradesDrawer}
           setShowTradesDrawer={setShowTradesDrawer}
