@@ -370,7 +370,6 @@
 
 
 
-
 import React, { useState, useEffect } from 'react';
 import { 
   User, 
@@ -491,7 +490,8 @@ export default function AccountPage() {
         body: JSON.stringify({ ...formData, isVerified: true })
       });
 
-      const data = await response.json();
+      // Response parsed to satisfy good practices
+      await response.json();
       
       setIsVerified(true);
       localStorage.setItem('user_is_verified', 'true');

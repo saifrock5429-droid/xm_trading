@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { 
-  BarChart2, HelpCircle, User, Trophy, Store, Sparkles 
+   Trophy, Sparkles 
 } from 'lucide-react';
 
 export default function Tournaments() {
