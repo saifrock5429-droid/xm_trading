@@ -13,17 +13,6 @@ export default function Footer() {
           <h3 className="text-2xl sm:text-3xl font-bold text-gray-900 tracking-tight">
             Feel connected anytime, anywhere.
           </h3>
-          {/* <div className="flex items-center space-x-2">
-            {['f', 'i', 'x', 'yt', 'in', 'tk', 'tg'].map((item, idx) => (
-              <a
-                key={idx}
-                href="#social"
-                className="w-9 h-9 rounded-lg bg-gray-200/80 hover:bg-gray-300 flex items-center justify-center text-gray-700 text-xs font-bold transition"
-              >
-                {item.toUpperCase()}
-              </a>
-            ))}
-          </div> */}
         </div>
 
         {/* 2. Navigation Links Grid */}
@@ -39,7 +28,7 @@ export default function Footer() {
               <li className="hover:text-blue-600 cursor-pointer">Tight Spreads</li>
               <li className="hover:text-blue-600 cursor-pointer">Execution Policy</li>
               <li className="hover:text-blue-600 cursor-pointer">Margin and Leverage</li>
-              <li className="hover:text-blue-600 cursor-pointer">XM Reviews</li>
+              <li className="hover:text-blue-600 cursor-pointer">KTX Reviews</li>
             </ul>
           </div>
 
@@ -59,9 +48,9 @@ export default function Footer() {
               OUR OFFERING
             </h4>
             <ul className="space-y-2.5 font-medium text-gray-800">
-              <li className="hover:text-blue-600 cursor-pointer">XM Copy Trading</li>
-              <li className="hover:text-blue-600 cursor-pointer">XM Competitions</li>
-              <li className="hover:text-blue-600 cursor-pointer">XM Traders Club</li>
+              <li className="hover:text-blue-600 cursor-pointer">KTX Copy Trading</li>
+              <li className="hover:text-blue-600 cursor-pointer">KTX Competitions</li>
+              <li className="hover:text-blue-600 cursor-pointer">KTX Traders Club</li>
               <li className="hover:text-blue-600 cursor-pointer">Refer a Friend</li>
             </ul>
           </div>
@@ -74,7 +63,7 @@ export default function Footer() {
             <ul className="space-y-2.5 font-medium text-gray-800">
               <li className="hover:text-blue-600 cursor-pointer">MT4 Platform</li>
               <li className="hover:text-blue-600 cursor-pointer">MT5 Platform</li>
-              <li className="hover:text-blue-600 cursor-pointer">XM App</li>
+              <li className="hover:text-blue-600 cursor-pointer">KTX App</li>
               <li className="hover:text-blue-600 cursor-pointer">APK</li>
             </ul>
           </div>
@@ -85,11 +74,11 @@ export default function Footer() {
               COMPANY
             </h4>
             <ul className="space-y-2.5 font-medium text-gray-800">
-              <li className="hover:text-blue-600 cursor-pointer">Who is XM Group?</li>
+              <li className="hover:text-blue-600 cursor-pointer">Who is KTX Group?</li>
               <li className="hover:text-blue-600 cursor-pointer">Careers</li>
               <li className="hover:text-blue-600 cursor-pointer">Regulation</li>
               <li className="hover:text-blue-600 cursor-pointer">Legal Documents</li>
-              <li className="hover:text-blue-600 cursor-pointer">XM Awards</li>
+              <li className="hover:text-blue-600 cursor-pointer">KTX Awards</li>
               <li className="hover:text-blue-600 cursor-pointer">CSR</li>
               <li className="hover:text-blue-600 cursor-pointer">Contact Us</li>
               <li className="hover:text-blue-600 cursor-pointer">Help Center</li>
@@ -100,14 +89,14 @@ export default function Footer() {
         {/* 3. Logo & Store Downloads Row */}
         <div className="flex flex-col sm:flex-row justify-between items-center border-t border-b border-gray-300 py-6 gap-4">
           <div className="text-2xl font-black tracking-tighter text-gray-900">
-            XM
+            KTX
           </div>
           <div className="flex items-center space-x-3">
-            <button className="bg-white border border-gray-300 px-4 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 flex items-center space-x-2">
+            <button className="bg-white border border-gray-300 px-4 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 flex items-center space-x-2 cursor-pointer">
               <span>Download on the</span>
               <strong className="block text-sm leading-none">App Store</strong>
             </button>
-            <button className="bg-white border border-gray-300 px-4 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 flex items-center space-x-2">
+            <button className="bg-white border border-gray-300 px-4 py-2 rounded-lg text-xs font-semibold hover:bg-gray-50 flex items-center space-x-2 cursor-pointer">
               <span>DOWNLOAD OUR</span>
               <strong className="block text-sm leading-none">Android App</strong>
             </button>
@@ -125,16 +114,16 @@ export default function Footer() {
         {/* 5. Legal Disclaimers */}
         <div className="text-[11px] text-gray-600 leading-relaxed space-y-3 pt-2">
           <p>
-            XM Global Limited is regulated by the Financial Services Commission (FSC) of Belize under the Securities Industry Act 2021 (license number 8557558).
+            KTX Global Limited is regulated by the Financial Services Commission (FSC) under the Securities Industry Act (license number 8557558).
           </p>
           <p>
-            Risk Warning: Our services involve a significant risk and can result in the loss of your invested capital. Please read and ensure you fully understand our <a href="#risk" className="text-blue-600 underline">Risk Disclosures (XM Global)</a>.
+            Risk Warning: Our services involve a significant risk and can result in the loss of your invested capital. Please read and ensure you fully understand our <a href="#risk" className="text-blue-600 underline">Risk Disclosures (KTX Global)</a>.
           </p>
           <p>
             <strong>Restricted Regions:</strong> We do not provide our service to citizens of the United States of America, Canada, Israel and the Islamic Republic of Iran (and other sanctioned countries).
           </p>
           <p>
-            XM does not direct its website and services to any individual in any country in which the use of its website and services are prohibited by local laws or regulations. When accessing this website from a country in which its use may or may not be prohibited, it is the user's responsibility to ensure that any use of the website or services adhere to local laws or regulations. XM does not affirm that the information on its website is suitable to all jurisdictions.
+            KTX does not direct its website and services to any individual in any country in which the use of its website and services are prohibited by local laws or regulations. When accessing this website from a country in which its use may or may not be prohibited, it is the user's responsibility to ensure that any use of the website or services adhere to local laws or regulations. KTX does not affirm that the information on its website is suitable to all jurisdictions.
           </p>
         </div>
 
@@ -163,7 +152,7 @@ export default function Footer() {
           </div>
           <button 
             onClick={() => setShowRiskBanner(false)}
-            className="text-gray-400 hover:text-gray-700 p-1"
+            className="text-gray-400 hover:text-gray-700 p-1 cursor-pointer"
           >
             <X className="w-4 h-4" />
           </button>

@@ -1,8 +1,8 @@
-
 import React, { useState } from 'react';
 import { ChevronDown, Menu, X, Globe } from 'lucide-react';
 import { TradingMegaMenu, DiscoverMegaMenu, CompanyMenu } from './MegaMenus';
 import { tradingMenu, discoverMenu, companyMenu } from '../data/navigationData';
+import navlogo from '../assets/navlogo.png';
 
 export default function Navbar({ activeTab, setActiveTab }) {
   const [openMenu, setOpenMenu] = useState(null);
@@ -60,9 +60,11 @@ export default function Navbar({ activeTab, setActiveTab }) {
               className="flex items-center space-x-2 cursor-pointer" 
               onClick={() => { setActiveTab('home'); setMobileNavOpen(false); }}
             >
-              <div className="bg-red-600 text-white font-black text-xl px-2.5 py-1 rounded tracking-tighter">
-                XM
-              </div>
+              <img 
+                src={navlogo} 
+                alt="Logo" 
+                className="h-9 w-auto object-contain" 
+              />
             </div>
 
             <nav className="hidden md:flex space-x-6">
