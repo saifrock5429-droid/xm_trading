@@ -1,7 +1,6 @@
-
-
 // import React, { useState } from 'react';
 // import { Eye, EyeOff, Headphones, CheckCircle2, AlertCircle, X } from 'lucide-react';
+// import navlogo from '../assets/navlogo.png';
 
 // export default function LoginPage({ onNavigate }) {
 //   const [email, setEmail] = useState('');
@@ -33,26 +32,44 @@
 
 //     setLoading(true);
 //     try {
-//       const res = await fetch(`${process.env.REACT_APP_API_URL}/api/users/login`, {
+//       const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/['"]+/g, '').trim();
+//       const res = await fetch(`${API_URL}/api/users/login`, {
 //         method: 'POST',
 //         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ email, password })
+//         body: JSON.stringify({ email: email.trim().toLowerCase(), password })
 //       });
 
 //       const data = await res.json();
 
-//       if (data.success) {
+//       if (data.success && data.user) {
 //         showToastMsg('✅ Login successful! Redirecting to Terminal...', 'success');
         
-//         // Save user info to localStorage
+//         // Save user info & live balance accurately from MongoDB
+//         const userBal = Number(data.user.balance || 0);
 //         localStorage.setItem('userId', data.user._id);
 //         localStorage.setItem('userEmail', data.user.email);
-//         localStorage.setItem('trading_live_balance', Number(data.user.balance || 0).toString());
+//         localStorage.setItem('trading_live_balance', userBal.toString());
+
+//         if (data.user.avatarEmoji) {
+//           localStorage.setItem('user_avatar_emoji', data.user.avatarEmoji);
+//         }
+//         if (data.user.isVerified) {
+//           localStorage.setItem('user_is_verified', 'true');
+//         }
+
+//         // Broadcast balance to sync across tabs immediately
+//         try {
+//           const bc = new BroadcastChannel('trading_balance_sync');
+//           bc.postMessage({ balanceUSD: userBal });
+//           bc.close();
+//         } catch (e) {}
+
+//         window.dispatchEvent(new Event('storage'));
 
 //         setTimeout(() => {
 //           if (onNavigate) onNavigate('terminal');
 //           else window.location.href = '/terminal';
-//         }, 1200);
+//         }, 1000);
 //       } else {
 //         showToastMsg(data.message || 'Login failed', 'error');
 //       }
@@ -73,10 +90,11 @@
 
 //     setResetting(true);
 //     try {
-//       const res = await fetch(`${process.env.REACT_APP_API_URL}/api/users/forgot-password`, {
+//       const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/['"]+/g, '').trim();
+//       const res = await fetch(`${API_URL}/api/users/forgot-password`, {
 //         method: 'POST',
 //         headers: { 'Content-Type': 'application/json' },
-//         body: JSON.stringify({ email: forgotEmail, newPassword })
+//         body: JSON.stringify({ email: forgotEmail.trim().toLowerCase(), newPassword })
 //       });
 
 //       const data = await res.json();
@@ -113,9 +131,13 @@
 //         <div className="flex justify-between items-center mb-6">
 //           <div 
 //             onClick={() => onNavigate ? onNavigate('home') : (window.location.href = '/')}
-//             className="bg-red-600 text-white font-black text-xl px-2 py-0.5 rounded tracking-tighter cursor-pointer"
+//             className="cursor-pointer flex items-center"
 //           >
-//             XM
+//             <img 
+//               src={navlogo} 
+//               alt="Logo" 
+//               className="h-12 w-auto object-contain max-w-[160px]" 
+//             />
 //           </div>
 //           <div className="flex items-center space-x-3 text-gray-700">
 //             <button type="button" className="hover:opacity-80">
@@ -128,7 +150,7 @@
 //         {/* Title & Subtitle */}
 //         <h1 className="text-2xl font-bold text-gray-900 mb-1">Login</h1>
 //         <p className="text-xs text-gray-500 mb-6">
-//           New to XM?{' '}
+//           New to Trading?{' '}
 //           <button 
 //             type="button"
 //             onClick={() => onNavigate ? onNavigate('register') : (window.location.href = '/register')}
@@ -245,6 +267,8 @@
 //   );
 // }
 
+
+
 import React, { useState } from 'react';
 import { Eye, EyeOff, Headphones, CheckCircle2, AlertCircle, X } from 'lucide-react';
 import navlogo from '../assets/navlogo.png';
@@ -279,26 +303,44 @@ export default function LoginPage({ onNavigate }) {
 
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/users/login`, {
+      const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/['"]+/g, '').trim();
+      const res = await fetch(`${API_URL}/api/users/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email: email.trim().toLowerCase(), password })
       });
 
       const data = await res.json();
 
-      if (data.success) {
+      if (data.success && data.user) {
         showToastMsg('✅ Login successful! Redirecting to Terminal...', 'success');
         
-        // Save user info to localStorage
+        // Save user info & live balance accurately from MongoDB
+        const userBal = Number(data.user.balance || 0);
         localStorage.setItem('userId', data.user._id);
         localStorage.setItem('userEmail', data.user.email);
-        localStorage.setItem('trading_live_balance', Number(data.user.balance || 0).toString());
+        localStorage.setItem('trading_live_balance', userBal.toString());
+
+        if (data.user.avatarEmoji) {
+          localStorage.setItem('user_avatar_emoji', data.user.avatarEmoji);
+        }
+        if (data.user.isVerified) {
+          localStorage.setItem('user_is_verified', 'true');
+        }
+
+        // Broadcast balance to sync across tabs immediately
+        try {
+          const bc = new BroadcastChannel('trading_balance_sync');
+          bc.postMessage({ balanceUSD: userBal });
+          bc.close();
+        } catch (e) {}
+
+        window.dispatchEvent(new Event('storage'));
 
         setTimeout(() => {
           if (onNavigate) onNavigate('terminal');
           else window.location.href = '/terminal';
-        }, 1200);
+        }, 1000);
       } else {
         showToastMsg(data.message || 'Login failed', 'error');
       }
@@ -319,10 +361,11 @@ export default function LoginPage({ onNavigate }) {
 
     setResetting(true);
     try {
-      const res = await fetch(`${process.env.REACT_APP_API_URL}/api/users/forgot-password`, {
+      const API_URL = (process.env.REACT_APP_API_URL || 'http://localhost:5000').replace(/['"]+/g, '').trim();
+      const res = await fetch(`${API_URL}/api/users/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail, newPassword })
+        body: JSON.stringify({ email: forgotEmail.trim().toLowerCase(), newPassword })
       });
 
       const data = await res.json();

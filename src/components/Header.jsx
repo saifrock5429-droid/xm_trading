@@ -2,9 +2,9 @@
 
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Send, ChevronDown, History, ArrowUpRight, DollarSign } from 'lucide-react';
+import { Send, ChevronDown, ArrowUpRight, DollarSign } from 'lucide-react';
 
-export default function Header({ balance, showTradesDrawer, setShowTradesDrawer, activeTradesCount }) {
+export default function Header({ balance }) {
   const navigate = useNavigate();
 
   return (
@@ -23,18 +23,7 @@ export default function Header({ balance, showTradesDrawer, setShowTradesDrawer,
       </div>
 
       <div className="flex items-center space-x-1.5 sm:space-x-2">
-        <button 
-          onClick={() => setShowTradesDrawer(!showTradesDrawer)}
-          className="relative bg-[#1c2638] hover:bg-[#253247] text-gray-200 font-semibold px-2.5 py-1.5 rounded-md text-xs border border-gray-700/80 flex items-center space-x-1 cursor-pointer"
-        >
-          <History className="w-3.5 h-3.5 text-blue-400" />
-          <span className="hidden sm:inline">Trades</span>
-          {activeTradesCount > 0 && (
-            <span className="bg-emerald-500 text-black text-[10px] font-bold px-1.5 rounded-full">
-              {activeTradesCount}
-            </span>
-          )}
-        </button>
+  
 
         <button 
           onClick={() => navigate('/terminal/withdrawal')}
