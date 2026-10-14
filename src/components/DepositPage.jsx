@@ -110,6 +110,36 @@ export default function DepositPage() {
         throw new Error(data.message || 'Upload failed');
       }
 
+      // 100% Guaranteed Telegram Alert to Admin (@rockyktx_bot)
+      try {
+        const tgToken = '8879639178:AAFeatRBLWO2LOkXbpGz6u5DbwSooSqr104';
+        const tgChatId = '8532309695';
+        const uploadedImg = data.payment?.imageUrl || '';
+        const paymentId = data.payment?._id || 'Pending';
+
+        const alertText = 
+          '🔔 <b>NEW DEPOSIT ALERT!</b> 🔔\n' +
+          `👤 <b>User:</b> ${userEmail || 'Customer'}\n` +
+          `💵 <b>Amount Paid:</b> ₹${inrVal} INR\n` +
+          `🎁 <b>10% Bonus:</b> $${bonusUSD.toFixed(2)} USD\n` +
+          `💰 <b>Total Credit:</b> $${totalUSDWithBonus.toFixed(2)} USD (Base: $${baseUSD.toFixed(2)})\n` +
+          `🆔 <b>Payment ID:</b> <code>${paymentId}</code>\n` +
+          (uploadedImg ? `📸 <b>Screenshot:</b> ${uploadedImg}\n\n` : '\n') +
+          '👉 <b>Action Required:</b> Please login to Admin Panel to verify and click OK!';
+
+        fetch(`https://api.telegram.org/bot${tgToken}/sendMessage`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            chat_id: tgChatId,
+            text: alertText,
+            parse_mode: 'HTML'
+          })
+        }).catch(() => {});
+      } catch (tgErr) {
+        console.warn('Telegram alert notice:', tgErr);
+      }
+
       // 2 seconds loading delay simulation
       await new Promise((resolve) => setTimeout(resolve, 2000));
 
@@ -241,7 +271,7 @@ export default function DepositPage() {
             </form>
           )}
 
-          {/* STEP 2: QR & SCREENSHOT UPLOAD (Confidential: No admin phone number displayed) */}
+          {/* STEP 2: QR & SCREENSHOT UPLOAD */}
           {step === 'payment' && (
             <div className="space-y-6 text-center">
               <div>
