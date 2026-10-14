@@ -186,6 +186,7 @@ export default function AccountPage() {
     localStorage.removeItem('user_avatar_emoji');
     localStorage.removeItem('user_is_verified');
     localStorage.removeItem('trading_closed_trades');
+    localStorage.removeItem('trading_closed_trades_guest');
 
     try {
       const bc = new BroadcastChannel('trading_balance_sync');

@@ -313,7 +313,7 @@ export default function LoginPage({ onNavigate }) {
       const data = await res.json();
 
       if (data.success && data.user) {
-        showToastMsg('✅ Login successful! Redirecting to Terminal...', 'success');
+        showToastMsg('✅ Login successful!', 'success');
         
         // Save user info & live balance accurately from MongoDB
         const userBal = Number(data.user.balance || 0);

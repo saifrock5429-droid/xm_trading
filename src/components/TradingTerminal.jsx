@@ -47,6 +47,49 @@ const generateInitialCandles = (count = 30) => {
   return candles;
 };
 
+// Helper to get user-isolated trade history storage key
+const getUserTradesKey = () => {
+  try {
+    const email = (localStorage.getItem('userEmail') || '').toLowerCase().trim();
+    const userId = (localStorage.getItem('userId') || '').trim();
+    const identifier = email || userId;
+    return identifier ? `trading_closed_trades_${identifier}` : 'trading_closed_trades_guest';
+  } catch (e) {
+    return 'trading_closed_trades_guest';
+  }
+};
+
+// Helper to safely load closed trades strictly for the current logged-in user
+const loadUserClosedTrades = () => {
+  try {
+    // 1. Purge the old shared/global legacy key so old cross-account trades are permanently erased
+    localStorage.removeItem('trading_closed_trades');
+
+    const email = (localStorage.getItem('userEmail') || '').toLowerCase().trim();
+    const userId = (localStorage.getItem('userId') || '').trim();
+
+    // If no user is logged in, fresh guest has 0 closed trades
+    if (!email && !userId) {
+      return [];
+    }
+
+    const key = getUserTradesKey();
+    const saved = localStorage.getItem(key);
+    if (!saved) return [];
+
+    const parsed = JSON.parse(saved);
+    if (!Array.isArray(parsed)) return [];
+
+    // Filter strictly by current user's email if logged in with email
+    if (email) {
+      return parsed.filter((t) => !t.userEmail || t.userEmail.toLowerCase() === email);
+    }
+    return parsed;
+  } catch (e) {
+    return [];
+  }
+};
+
 export default function TradingTerminal() {
   const navigate = useNavigate();
 
@@ -64,15 +107,8 @@ export default function TradingTerminal() {
 
   const [activeTrades, setActiveTrades] = useState([]);
 
-  // 2. Closed Trades Persistent State from LocalStorage
-  const [closedTrades, setClosedTrades] = useState(() => {
-    try {
-      const saved = localStorage.getItem('trading_closed_trades');
-      return saved ? JSON.parse(saved) : [];
-    } catch (e) {
-      return [];
-    }
-  });
+  // 2. Closed Trades State strictly isolated per logged-in user email
+  const [closedTrades, setClosedTrades] = useState(() => loadUserClosedTrades());
 
   const [showTradesDrawer, setShowTradesDrawer] = useState(false);
   const [tradesDrawerTab, setTradesDrawerTab] = useState('active');
@@ -206,12 +242,16 @@ export default function TradingTerminal() {
 
   useEffect(() => {
     fetchUserBalance();
+    setClosedTrades(loadUserClosedTrades());
+
     let channel;
     try {
       channel = new BroadcastChannel('trading_balance_sync');
       channel.onmessage = (event) => {
         if (event.data && event.data.logout) {
           setBalance(0);
+          setActiveTrades([]);
+          setClosedTrades([]);
           return;
         }
         if (event.data && typeof event.data.balanceUSD === 'number') {
@@ -233,8 +273,15 @@ export default function TradingTerminal() {
           }
         }
       }
-      if (event.key === 'userId' && !event.newValue) {
-        setBalance(0);
+      if (event.key === 'userId' || event.key === 'userEmail') {
+        if (!event.newValue) {
+          setBalance(0);
+          setActiveTrades([]);
+          setClosedTrades([]);
+        } else {
+          setClosedTrades(loadUserClosedTrades());
+          fetchUserBalance();
+        }
       }
     };
     window.addEventListener('storage', handleStorage);
@@ -323,13 +370,18 @@ export default function TradingTerminal() {
                 syncBalanceToServer(nextBal);
                 return nextBal;
               });
-              triggerToast(`+${returnAmount.toFixed(2)}$ Trade Won on ${trade.asset}!`, 'win');
+              triggerToast(`+${returnAmount.toFixed(2)}$ win `, 'win');
             } else {
-              triggerToast(`-${trade.amount}$ Trade Lost on ${trade.asset}`, 'loss');
+              triggerToast(`-${trade.amount}$ loss `, 'loss');
             }
+
+            const currentEmail = (localStorage.getItem('userEmail') || '').toLowerCase().trim();
+            const currentUserId = (localStorage.getItem('userId') || '').trim();
 
             const closedTrade = {
               ...trade,
+              userEmail: trade.userEmail || currentEmail,
+              userId: trade.userId || currentUserId,
               exitPrice,
               status: isWin ? 'WIN' : 'LOSS',
               profit: +profit.toFixed(2),
@@ -340,7 +392,9 @@ export default function TradingTerminal() {
             setClosedTrades((closed) => {
               const updated = [closedTrade, ...closed].slice(0, 50);
               try {
-                localStorage.setItem('trading_closed_trades', JSON.stringify(updated));
+                const key = getUserTradesKey();
+                localStorage.setItem(key, JSON.stringify(updated));
+                localStorage.removeItem('trading_closed_trades');
               } catch (e) {}
               return updated;
             });
@@ -543,6 +597,9 @@ export default function TradingTerminal() {
       return;
     }
 
+    const userEmail = (localStorage.getItem('userEmail') || '').toLowerCase().trim();
+    const userId = (localStorage.getItem('userId') || '').trim();
+
     const newTrade = {
       id: `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`,
       asset: selectedAsset.symbol,
@@ -552,7 +609,9 @@ export default function TradingTerminal() {
       entryPrice: currentPrice,
       duration: selectedExpiry.seconds,
       remainingTime: selectedExpiry.seconds,
-      time: new Date().toLocaleTimeString()
+      time: new Date().toLocaleTimeString(),
+      userEmail,
+      userId
     };
 
     const newBal = +(balance - tradeAmt).toFixed(2);
@@ -562,8 +621,8 @@ export default function TradingTerminal() {
     setActiveTrades((prev) => [newTrade, ...prev]);
 
     // Toast Notification for Buy / Sell trade placement
-    const actionLabel = type === 'UP' ? 'Buy (UP)' : 'Sell (DOWN)';
-    triggerToast(`${actionLabel} trade placed successfully for $${tradeAmt} on ${selectedAsset.symbol}!`, 'win');
+    // const actionLabel = type === 'UP' ? 'Buy (UP)' : 'Sell (DOWN)';
+    // triggerToast(`${actionLabel} trade placed successfully for $${tradeAmt} on ${selectedAsset.symbol}!`, 'win');
   };
 
   return (
